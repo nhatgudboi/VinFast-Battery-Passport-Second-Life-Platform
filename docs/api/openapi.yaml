@@ -1,0 +1,112 @@
+openapi: 3.0.4
+info:
+  title: VSF - VinFast Battery Passport & Second-Life API
+  description: API dac ta cho He thong Ho chieu So va Quan tri Vong doi Pin Xe Dien VinFast
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local Development Server
+paths:
+  /auth/login:
+    post:
+      summary: Dang nhap he thong
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, example: "lead.hanoi@vinfast.vn" }
+                password: { type: string, example: "ChangeMe123!" }
+      responses:
+        '200':
+          description: Dang nhap thanh cong, tra ve JWT Bearer Token
+        '401':
+          description: Thong tin dang nhap khong hop le
+
+  /dashboard/metrics:
+    get:
+      summary: Lay cac chi so KPI tong the vong doi pin
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Thanh cong
+
+  /batteries:
+    get:
+      summary: Lay danh sach pack pin phan trang kem bo loc
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: modelCode
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Danh sach pin
+
+  /batteries/{serial}:
+    get:
+      summary: Xem chi tiet ho so mot qua pin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: serial
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Thong tin chi tiet pin
+
+  /inspections:
+    post:
+      summary: Nhap so lieu do dac kiem dinh va tinh toan SoH
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [packSerialNumber, measuredCapacityKwh, odometerKm, cycleCount]
+              properties:
+                packSerialNumber: { type: string }
+                measuredCapacityKwh: { type: number }
+                internalResistanceMohm: { type: number }
+                odometerKm: { type: integer }
+                cycleCount: { type: integer }
+      responses:
+        '201':
+          description: Kiem dinh thanh cong, da cap nhat SoH va phan luong trang thai
+
+  /public/passport/{serial}:
+    get:
+      summary: Cong tra cuu Ho chieu Pin cong khai cho nguoi quet ma QR
+      parameters:
+        - name: serial
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Thong tin ho chieu pin cong khai
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

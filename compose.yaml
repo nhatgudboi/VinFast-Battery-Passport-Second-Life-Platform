@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vsf-postgres
+    environment:
+      POSTGRES_DB: vsf_battery
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "127.0.0.1:54332:5432"
+    volumes:
+      - vsf_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d vsf_battery"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  vsf_postgres_data:

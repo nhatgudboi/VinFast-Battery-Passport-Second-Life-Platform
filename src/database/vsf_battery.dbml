@@ -1,0 +1,95 @@
+// Database Markup Language (DBML) cho he thong VSF - VinFast Battery Passport
+Project VSF_Battery_Passport {
+  database_type: 'PostgreSQL'
+  Note: 'He thong Quan ly Ho chieu So & Vong doi Tai sinh Pin Xe Dien VinFast'
+}
+
+Table app_users {
+  id bigint [pk, increment]
+  username varchar(100) [not null, unique]
+  email varchar(255) [not null, unique]
+  password_hash text [not null]
+  full_name varchar(255) [not null]
+  phone varchar(30)
+  avatar_url text
+  role varchar(50) [not null, note: 'ADMIN, STATION_LEAD, TECHNICIAN, AUDITOR']
+  is_active boolean [default: true]
+  station_name varchar(255)
+  created_at timestamptz [default: `now()`]
+}
+
+Table battery_models {
+  id bigint [pk, increment]
+  model_code varchar(50) [not null, unique, note: 'VF3, VF5, VF8, VF9...']
+  model_name varchar(150) [not null]
+  chemistry varchar(50) [not null, note: 'LFP, NMC']
+  design_capacity_kwh numeric(8,2) [not null]
+  nominal_voltage numeric(8,2) [not null]
+  weight_kg numeric(8,2) [not null]
+  warranty_soh_threshold numeric(5,2) [default: 70.00]
+}
+
+Table battery_packs {
+  id bigint [pk, increment]
+  serial_number varchar(100) [not null, unique, note: 'Ma dinh danh Ho chieu QR']
+  model_id bigint [not null, ref: > battery_models.id]
+  vehicle_vin varchar(50)
+  vehicle_plate varchar(20)
+  manufacture_date date [not null]
+  current_soh_percent numeric(5,2) [not null, default: 100.00]
+  cycle_count int [default: 0]
+  odometer_km int [default: 0]
+  status varchar(50) [not null, note: 'ON_VEHICLE, RECALL_PENDING, SECOND_LIFE_BESS, RECYCLED']
+  current_location varchar(255)
+  carbon_footprint_kg_co2 numeric(10,2)
+  created_at timestamptz [default: `now()`]
+}
+
+Table battery_inspections {
+  id bigint [pk, increment]
+  pack_id bigint [not null, ref: > battery_packs.id]
+  inspection_type varchar(50) [not null]
+  inspection_date date [not null]
+  odometer_km int
+  cycle_count int
+  measured_capacity_kwh numeric(8,2) [not null]
+  calculated_soh_percent numeric(5,2) [not null]
+  internal_resistance_mohm numeric(6,2)
+  station_name varchar(255) [not null]
+  inspector_id bigint [ref: > app_users.id]
+  recommendation text
+  created_at timestamptz [default: `now()`]
+}
+
+Table second_life_deployments {
+  id bigint [pk, increment]
+  pack_id bigint [not null, ref: > battery_packs.id]
+  bess_station_code varchar(100) [not null]
+  bess_station_name varchar(255) [not null]
+  deployment_date date [not null]
+  initial_soh_at_deploy numeric(5,2) [not null]
+  cluster_position varchar(50)
+  approved_by bigint [ref: > app_users.id]
+}
+
+Table import_batches {
+  id bigint [pk, increment]
+  batch_code varchar(100) [not null]
+  original_file_name varchar(500) [not null]
+  total_rows int [default: 0]
+  success_rows int [default: 0]
+  failed_rows int [default: 0]
+  status varchar(50)
+  imported_by bigint [ref: > app_users.id]
+  created_at timestamptz [default: `now()`]
+}
+
+Table audit_logs {
+  id bigint [pk, increment]
+  actor_user_id bigint [ref: > app_users.id]
+  action varchar(50) [not null]
+  entity_name varchar(100) [not null]
+  entity_id bigint
+  details jsonb
+  created_at timestamptz [default: `now()`]
+}
