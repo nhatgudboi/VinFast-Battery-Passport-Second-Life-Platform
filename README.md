@@ -58,45 +58,45 @@ Toàn bộ 16 User Stories đều đã có hành vi mục tiêu định lượng
 
 ```mermaid
 flowchart TB
-    subgraph roles["Các Tác Nhân (Actors)"]
+    subgraph roles["Cac Tac Nhan — Actors"]
         direction LR
-        admin(["Administrator (HQ)"])
-        lead(["Station Lead (Trưởng Xưởng)"])
-        tech(["Technician (Kỹ Thuật Viên)"])
-        viewer(["Auditor / Public User"])
+        admin(["Quan Tri Vien HQ"])
+        lead(["Truong Xuong Dich Vu"])
+        tech(["Ky Thuat Vien Do Kiem"])
+        viewer(["Kiem Toan va Khach Hang"])
     end
 
-    subgraph system["VSF — Ranh Giới Hệ Thống (System Boundary)"]
+    subgraph system["VSF — Ranh Gioi He Thong"]
         direction TB
-        subgraph mgmt["CẤP ĐỘ QUẢN TRỊ & ĐIỀU PHỐI (HQ & TRƯỞNG XƯỞNG)"]
+        subgraph row1["Cap Do Quan Tri va Dieu Phoi"]
             direction LR
-            adminCases["<b>Administrator (VinFast HQ)</b><br/><br/>• UC01 Đăng nhập · UC02 Đăng xuất<br/>• UC03 Dashboard SoH · UC15 Audit Log<br/>• UC04 Sổ Pack Pin · UC12 Import Excel<br/>• UC10 Điều phối BESS · UC11 Tái chế<br/>• UC14 Xuất PDF EU · UC16 Quản lý User"]
-            leadCases["<b>Station Lead (Trưởng Xưởng Dịch Vụ)</b><br/><br/>• UC01 Đăng nhập · UC02 Đăng xuất<br/>• UC03 Dashboard SoH · UC15 Audit Log<br/>• UC04 Sổ Pack Pin · UC06 Hồ sơ Xe 1-N<br/>• UC07 In Tem QR · UC08 Đo kiểm SoH<br/>• UC09 Phê duyệt đổi pin (SoH < 70%)<br/>• UC10 Điều phối BESS · UC11 Tái chế<br/>• UC12 Import Excel · UC14 Xuất PDF EU"]
+            adminBox["<b>Quan Tri Vien VinFast HQ</b><br/><br/>• UC01 Dang nhap · UC02 Dang xuat<br/>• UC03 Dashboard SoH · UC15 Audit Log<br/>• UC04 So Pack Pin · UC12 Import Excel<br/>• UC10 Dieu phoi BESS · UC11 Tai che<br/>• UC14 Xuat PDF EU · UC16 Quan tri User"]
+            leadBox["<b>Truong Xuong Dich Vu</b><br/><br/>• UC01 Dang nhap · UC02 Dang xuat<br/>• UC03 Dashboard SoH · UC15 Audit Log<br/>• UC04 So Pack Pin · UC06 Ho so Xe 1-N<br/>• UC07 In Tem QR · UC08 Do kiem SoH<br/>• UC09 Duyet doi pin khi SoH duoi 70%<br/>• UC10 Dieu phoi BESS · UC11 Tai che"]
         end
-        subgraph ops["CẤP ĐỘ VẬN HÀNH HIỆN TRƯỜNG & CỔNG TRA CỨU"]
+        subgraph row2["Cap Do Van Hanh Hien Truong va Cong Tra Cuu"]
             direction LR
-            techCases["<b>Technician (Kỹ Thuật Viên Xưởng)</b><br/><br/>• UC01 Đăng nhập · UC02 Đăng xuất<br/>• UC03 Dashboard SoH · UC04 Sổ Pack Pin<br/>• UC06 Xem Hồ sơ Xe 1-N · UC07 In Tem QR<br/>• UC08 Nhập đo dung lượng & tính SoH<br/>• UC09 Kích hoạt đổi pin (SoH < 70% / Lỗi cell)"]
-            viewerCases["<b>Auditor / Public User (Thanh Tra & Khách Hàng)</b><br/><br/>• UC06 Xem hồ sơ kỹ thuật pin công khai<br/>• UC13 Quét QR Hộ chiếu số trên di động<br/>• UC14 Tải Giấy chứng nhận pin PDF chuẩn EU"]
+            techBox["<b>Ky Thuat Vien Do Kiem</b><br/><br/>• UC01 Dang nhap · UC02 Dang xuat<br/>• UC03 Dashboard SoH · UC04 So Pack Pin<br/>• UC06 Ho so Xe 1-N · UC07 In Tem QR<br/>• UC08 Do dung luong va tinh SoH<br/>• UC09 Kich hoat doi pin khi loi cell"]
+            viewerBox["<b>Kiem Toan va Khach Hang</b><br/><br/>• UC06 Tra cuu ho so pin cong khai<br/>• UC13 Quet QR Ho chieu tren di dong<br/>• UC14 Tai Chung nhan pin PDF chuan EU"]
         end
     end
 
-    admin --> adminCases
-    lead --> leadCases
-    tech --> techCases
-    viewer --> viewerCases
+    admin --> adminBox
+    lead --> leadBox
+    tech --> techBox
+    viewer --> viewerBox
 
     classDef actor fill:#1b365d,color:#fff,stroke:#00205b
     classDef primary fill:#0088ff,color:#fff,stroke:#0055b3
     classDef standard fill:#10b981,color:#fff,stroke:#059669
     classDef publicStyle fill:#d97706,color:#fff,stroke:#b45309
     class admin,lead,tech,viewer actor
-    class adminCases,leadCases primary
-    class techCases standard
-    class viewerCases publicStyle
+    class adminBox,leadBox primary
+    class techBox standard
+    class viewerBox publicStyle
     style roles fill:#f8fafc,stroke:#94a3b8,stroke-dasharray: 4 4
     style system fill:#f0f9ff,stroke:#0088ff,stroke-width:2px
-    style mgmt fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
-    style ops fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
+    style row1 fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
+    style row2 fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
 ```
 
 Đặc tả chi tiết từng luồng tiền điều kiện, luồng chính, kịch bản lỗi và hậu điều kiện được duy trì tại [Đặc Tả Use Cases & RBAC](docs/03-use-cases.md).
