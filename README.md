@@ -5,11 +5,11 @@ Tuân thủ tiêu chuẩn pin Châu Âu (*EU Battery Regulation 2023/1542*) và 
 
 ---
 
-## 1. Yêu Cầu Nghiệp Vụ — INVEST, Use Cases & Phân Quyền
+## 1. Yêu Cầu Nghiệp Vụ — INVEST, Use Cases & Phân Quyền (RBAC)
 
-Hệ thống giải quyết bài toán cốt lõi: Quản trị toàn bộ vòng đời của hàng chục nghìn pack pin xe điện VinFast (từ VF 3, VF 5, VF 6, VF 7, VF 8, VF 9) từ lúc xuất xưởng tại nhà máy VinES Hải Phòng, vận hành trên đường, kiểm định đo chai pin (SoH) định kỳ, kích hoạt đổi pin miễn phí khi SoH < 70%, đến khi tái sinh làm trạm tích điện đệm (BESS) cho mạng lưới trạm sạc V-Green.
+Yêu cầu nghiệp vụ định nghĩa những gì nền tảng VSF phải thực thi, các nhóm tác nhân sử dụng, giá trị mang lại cho chuỗi cung ứng VinFast và các tiêu chí thành công quan sát được. Toàn bộ 16 User Stories được rà soát nghiêm ngặt theo chuẩn INVEST và ánh xạ trực tiếp sang 16 Use Cases và ma trận phân quyền 4 Roles.
 
-### 1.1 Product mind map
+### 1.1 Product Mind Map
 
 Hệ thống **VSF** được trực quan hóa toàn diện qua Bản đồ Tư duy Sản phẩm (Product Mind Map), bao gồm sơ đồ tổng quan và hai cụm phân hệ nghiệp vụ chi tiết:
 
@@ -25,24 +25,56 @@ Hệ thống **VSF** được trực quan hóa toàn diện qua Bản đồ Tư 
 
 ![Phân hệ Kiểm định & Quản trị Hệ thống](docs/images/mindmap-inspection-ops.png)
 
-### 1.2 Sơ đồ Ca Sử Dụng (Use Cases)
+### 1.2 Tiêu Chuẩn INVEST & Danh Sách 16 User Stories
+
+Danh mục sản phẩm V1 bao gồm **16 User Stories**. Các câu chuyện người dùng này bao phủ toàn bộ vòng đời pin: đăng nhập an toàn, dashboard giám sát SoH, quản trị pack pin, kiểm định đo dung lượng tự động, kích hoạt thu hồi đổi pin, tái sinh trạm sạc BESS, thanh lý tái chế, import Excel từ VinES, xuất PDF chứng nhận EU, cổng QR di động công khai, nhật ký kiểm toán và quản trị nhân sự xưởng.
+
+Trước khi đưa vào phát triển, mỗi User Story đều được kiểm định chặt chẽ theo 6 tiêu chí **INVEST**:
+
+| Tiêu Chí | Ý Nghĩa Thực Tế Trong Hệ Thống VSF |
+|---|---|
+| **Independent (Độc Lập)** | Mỗi User Story đại diện cho một năng lực nghiệp vụ cụ thể, có thể phát triển, kiểm thử và bàn giao độc lập mà không bị phụ thuộc vòng tròn. |
+| **Negotiable (Có Thể Đàm Phán)** | Thiết kế UI và giải pháp công nghệ có thể tinh chỉnh linh hoạt, miễn là bảo toàn tuyệt đối quy tắc bảo hành đổi pin của VinFast và quy chuẩn EU. |
+| **Valuable (Có Giá Trị)** | Mang lại giá trị trực tiếp cho chuỗi giá trị VinFast: ngăn chặn gian lận bảo hành, mở đường thông quan xuất khẩu EU, và tối ưu hóa tài sản tái sinh BESS. |
+| **Estimable (Ước Lượng Được)** | Rõ ràng về Tác nhân (Actor), Đầu vào (Inputs), Đầu ra (Outputs), Điều kiện kích hoạt và Kịch bản lỗi để ước lượng chính xác Story Points. |
+| **Small (Đủ Nhỏ)** | Mỗi Story đủ gọn để phân rã hoàn chỉnh thành 5 phần việc kỹ thuật: API Endpoint, Application Policy, Database Query, React UI/Modal, và Unit/Integration Test. |
+| **Testable (Kiểm Thử Được)** | Mọi Story đều ánh xạ trực tiếp sang các tiêu chí nghiệm thu định lượng (như công thức SoH, mã lỗi RFC 7807, trạng thái Database). |
+
+```text
+US01–US02   Xác thực & Quản lý Phiên làm việc (Authentication & Session)
+US03        Dashboard Phân tích Vòng đời & Tỷ lệ SoH Toàn mạng lưới
+US04–US07   Quản trị Pack Pin & Truy vết Hộ chiếu QR (Asset Tracking)
+US08–US09   Kiểm định Đo đạc, Tính SoH & Kích hoạt Bảo hành Đổi pin
+US10–US11   Điều phối Tái sinh Second-Life BESS & Thanh lý Tái chế
+US12–US13   Nhập lô Excel Nhà máy VinES & Xuất Chứng nhận PDF Chuẩn EU
+US14        Nhật ký Kiểm toán & Đối soát Tuân thủ (Audit Trail)
+US15        Quản trị Người dùng & Phân bổ Xưởng Dịch vụ (Admin Only)
+US16        Quản lý Hồ sơ Cá nhân & Bảo mật Mật khẩu
+```
+
+Toàn bộ 16 User Stories đều đã có hành vi mục tiêu định lượng: Đăng xuất xóa token client-side, công thức SoH tự động khóa cứng dung lượng chuẩn theo Model xe, nhập Excel nguyên tử All-or-Nothing giới hạn 10 MB/5.000 dòng, xuất PDF đạt chuẩn EU kèm chữ ký băm, và cổng quét QR di động không làm lộ thông tin cá nhân (PII). Tài liệu rà soát và phân rã kỹ thuật 5 tầng được duy trì đầy đủ tại [Rà Soát INVEST Requirements](docs/08-invest-requirements.md).
+
+### 1.3 Sơ Đồ Ca Sử Dụng (Use Cases)
 
 ```mermaid
 flowchart TB
     subgraph roles["Các Tác Nhân (Actors)"]
         direction LR
-        admin(["Quản Trị Viên (Admin)"])
-        lead(["Trưởng Xưởng Dịch Vụ / Trạm V-Green"])
-        tech(["Kỹ Thuật Viên Đo Kiểm"])
-        viewer(["Kiểm Toán Viên / Khách Quét QR"])
+        admin(["Administrator<br/>(VinFast HQ)"])
+        lead(["Station Lead<br/>(Trưởng Xưởng / Trạm)"])
+        tech(["Technician<br/>(Kỹ Thuật Viên)"])
+        viewer(["Auditor / Public<br/>(Thanh Tra / Khách Hàng)"])
     end
 
     subgraph system["VSF — Ranh Giới Hệ Thống"]
         direction LR
-        adminCases["<b>Quản Trị Viên</b><br/><br/>UC01 Đăng nhập · UC02 Đăng xuất<br/>UC03 Xem Dashboard Vòng đời Pin<br/>UC14 Quản lý Nhân sự & Phân quyền<br/>UC15 Xem Nhật ký Kiểm toán (Audit Log)<br/>UC16 Cấu hình Ngưỡng Bảo hành Pin"]
-        leadCases["<b>Trưởng Xưởng Dịch Vụ</b><br/><br/>UC03 Xem Dashboard Vòng đời Pin<br/>UC04 Xem Danh sách Pack Pin Toàn quốc<br/>UC08 Phê duyệt Đổi Pin mới (SoH < 70%)<br/>UC09 Điều phối Pin vào Trạm sạc BESS<br/>UC10 Phê duyệt Thanh lý Tái chế (Recycle)<br/>UC11 Import Lô Pin mới từ Excel<br/>UC12 Xuất Báo cáo Chứng nhận PDF"]
-        techCases["<b>Kỹ Thuật Viên</b><br/><br/>UC03 Xem Dashboard Vòng đời Pin<br/>UC04 Xem Danh sách Pack Pin<br/>UC05 Tra cứu Hồ sơ Pin qua Serial / QR<br/>UC06 Nhập Số liệu Đo đạc & Tính SoH<br/>UC07 In Tem Nhãn QR dán lên Vỏ Pin"]
-        viewerCases["<b>Kiểm Toán Viên / Khách Hàng</b><br/><br/>UC05 Tra cứu Hồ sơ Pin qua Serial / QR<br/>UC13 Quét Mã QR xem Hộ chiếu Pin Công khai<br/>UC12 Tải Chứng chỉ Sức khỏe Pin (PDF)"]
+        adminCases["<b>Administrator (VinFast HQ)</b><br/><br/>UC01 Đăng nhập · UC02 Đăng xuất<br/>UC03 Xem Dashboard Vòng đời & SoH<br/>UC04 Tra cứu Sổ Pack Pin Toàn quốc<br/>UC10 Điều phối Pin vào Trạm sạc BESS<br/>UC11 Lập lệnh Thanh lý Tái chế<br/>UC12 Batch Import Excel từ VinES<br/>UC14 Xuất Chứng nhận PDF chuẩn EU<br/>UC15 Xem Nhật ký Kiểm toán (Audit Log)<br/>UC16 Quản lý Nhân sự & Phân xưởng"]
+        
+        leadCases["<b>Station Lead (Trưởng Xưởng)</b><br/><br/>UC01 Đăng nhập · UC02 Đăng xuất<br/>UC03 Xem Dashboard Vòng đời & SoH<br/>UC04 Tra cứu Sổ Pack Pin Xưởng<br/>UC06 Xem Chi tiết Hồ sơ Pin & Xe 1-N<br/>UC07 In Tem Nhãn Mã QR chuẩn 50x30mm<br/>UC08 Nhập Đo kiểm Dung lượng & Tính SoH<br/>UC09 Phê duyệt Lệnh Đổi pin mới (SoH < 70%)<br/>UC10 Điều phối Pin vào Trạm sạc BESS<br/>UC11 Lập lệnh Thanh lý Tái chế<br/>UC12 Batch Import Excel từ VinES<br/>UC14 Xuất Chứng nhận PDF chuẩn EU<br/>UC15 Xem Nhật ký Kiểm toán (Audit Log)"]
+        
+        techCases["<b>Technician (Kỹ Thuật Viên)</b><br/><br/>UC01 Đăng nhập · UC02 Đăng xuất<br/>UC03 Xem Dashboard Vòng đời & SoH<br/>UC04 Tra cứu Sổ Pack Pin Xưởng<br/>UC06 Xem Chi tiết Hồ sơ Pin & Xe 1-N<br/>UC07 In Tem Nhãn Mã QR dán Vỏ Pin<br/>UC08 Nhập Đo kiểm Dung lượng & Tính SoH<br/>UC09 Kích hoạt Lệnh Thu hồi Đổi pin"]
+        
+        viewerCases["<b>Auditor / Public User</b><br/><br/>UC06 Xem Chi tiết Hồ sơ Pin Công khai<br/>UC13 Quét Mã QR xem Hộ chiếu Di động<br/>UC14 Tải Giấy Chứng Nhận Pin (PDF)"]
     end
 
     admin --> adminCases
@@ -60,20 +92,27 @@ flowchart TB
     class viewerCases auditStyle
 ```
 
-### 1.3 Ma Trận Phân Quyền (Roles & Permissions)
+Đặc tả chi tiết từng luồng tiền điều kiện, luồng chính, kịch bản lỗi và hậu điều kiện được duy trì tại [Đặc Tả Use Cases & RBAC](docs/03-use-cases.md).
 
-| Chức Năng Nghiệp Vụ | Admin | Station Lead | Technician | Viewer / Public |
-|---|:---:|:---:|:---:|:---:|
-| **Xem Dashboard & Danh sách Pin** | Có | Có | Có | Có (Chỉ xem) |
-| **Nhập kết quả kiểm định & Đo SoH** | Có | Có | Có | Không |
-| **Phê duyệt Đổi pin miễn phí (<70%)** | Có | Có | Không | Không |
-| **Điều phối Pin vào Trạm sạc BESS** | Có | Có | Không | Không |
-| **Import lô pin từ Excel (VinES)** | Có | Có | Không | Không |
-| **In tem nhãn QR & Xuất PDF** | Có | Có | Có | Có |
-| **Xem Nhật ký hoạt động (Audit log)** | Có | Có | Không | Không |
-| **Quản trị người dùng & Phân vai trò** | **Có** | Không | Không | Không |
+### 1.4 Ma Trận Phân Quyền (Roles & Permissions)
 
----
+| Năng Lực Nghiệp Vụ (Capabilities) | Admin (VinFast HQ) | Station Lead (Trưởng Xưởng) | Technician (Kỹ Thuật Viên) | Auditor / Public (Thanh Tra / Khách) | Ghi Chú Ràng Buộc Kỹ Thuật |
+|---|:---:|:---:|:---:|:---:|---|
+| **Xem Dashboard KPI & Biểu đồ SoH** | Có | Có | Có | Không | Phân vùng dữ liệu toàn quốc vs xưởng |
+| **Tra cứu Sổ Pack Pin (Battery Registry)** | Có | Có | Có | Không | Hỗ trợ bộ lọc đa chiều (SoH, Model) |
+| **Đăng ký Pack Pin mới xuất xưởng** | Có | Có | Không | Không | Ràng buộc duy nhất Serial Number |
+| **In Tem Nhãn Mã QR kích thước chuẩn** | Có | Có | Có | Không | Định dạng vector nhiệt 50x30mm |
+| **Nhập thông số đo kiểm dung lượng** | Có | Có | Có | Không | Tự động tính SoH, khóa Model gốc |
+| **Phê duyệt lệnh đổi pin mới (< 70%)** | Có | Có | Không | Không | Căn cứ hợp đồng thuê pin VinFast |
+| **Điều phối Pin vào Trạm sạc BESS** | Có | Có | Không | Không | Điều kiện $55\% \le \text{SoH} < 70\%$ |
+| **Lập lệnh chuyển giao tái chế (< 55%)** | Có | Có | Không | Không | Bóc tách Lithium/Cobalt tại VinES |
+| **Batch Import file Excel từ VinES** | Có | Có | Không | Không | Giới hạn 10 MB / 5.000 dòng, Atomic |
+| **Quét mã QR tra cứu Hộ chiếu Công khai** | Có | Có | Có | **Có** | Endpoint mở, bảo vệ PII theo NĐ 13 |
+| **Xuất Giấy Chứng Nhận PDF chuẩn EU** | Có | Có | Có | Có | File PDF có QR và chữ ký số băm |
+| **Xem Nhật ký Kiểm toán (Audit Trail)** | Có | Có | Không | Không | Quyền chỉ đọc (Read-only immutable) |
+| **Quản trị người dùng & Phân xưởng** | **Có** | Không | Không | Không | Phân quyền độc quyền của Admin HQ |
+
+Tầng Backend API bắt buộc thực thi cưỡng chế phân quyền RBAC và token claims; việc ẩn/hiện các nút thao tác tại giao diện React chỉ phục vụ trải nghiệm người dùng (UI/UX).
 
 ## 2. Kiến Trúc Thông Tin & Giao Diện Người Dùng
 
