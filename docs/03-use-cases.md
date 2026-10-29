@@ -23,65 +23,46 @@
 
 ```mermaid
 flowchart TB
-    subgraph Actors["Tác Nhân (Actors)"]
+    subgraph roles["Các Tác Nhân (Actors)"]
         direction LR
-        admin(["Administrator<br/>(VinFast HQ)"])
-        lead(["Station Lead<br/>(Trưởng Xưởng / Trạm)"])
-        tech(["Technician<br/>(Kỹ Thuật Viên)"])
-        auditor(["Auditor / Public<br/>(Thanh Tra / Khách Hàng)"])
+        admin(["Administrator (HQ)"])
+        lead(["Station Lead (Trưởng Xưởng)"])
+        tech(["Technician (Kỹ Thuật Viên)"])
+        viewer(["Auditor / Public User"])
     end
 
-    subgraph System["Hệ Thống VSF — Battery Passport System Boundary"]
-        direction LR
-        
-        subgraph Auth_Module["1. Xác Thực & Hồ Sơ"]
-            UC01(["UC01: Đăng nhập"])
-            UC02(["UC02: Đăng xuất"])
-            UC16(["UC16: Đổi mật khẩu cá nhân"])
+    subgraph system["VSF — Ranh Giới Hệ Thống (System Boundary)"]
+        direction TB
+        subgraph mgmt["CẤP ĐỘ QUẢN TRỊ & ĐIỀU PHỐI (HQ & TRƯỞNG XƯỞNG)"]
+            direction LR
+            adminCases["<b>Administrator (VinFast HQ)</b><br/><br/>• UC01 Đăng nhập · UC02 Đăng xuất<br/>• UC03 Dashboard SoH · UC15 Audit Log<br/>• UC04 Sổ Pack Pin · UC12 Import Excel<br/>• UC10 Điều phối BESS · UC11 Tái chế<br/>• UC14 Xuất PDF EU · UC16 Quản lý User"]
+            leadCases["<b>Station Lead (Trưởng Xưởng Dịch Vụ)</b><br/><br/>• UC01 Đăng nhập · UC02 Đăng xuất<br/>• UC03 Dashboard SoH · UC15 Audit Log<br/>• UC04 Sổ Pack Pin · UC06 Hồ sơ Xe 1-N<br/>• UC07 In Tem QR · UC08 Đo kiểm SoH<br/>• UC09 Phê duyệt đổi pin (SoH < 70%)<br/>• UC10 Điều phối BESS · UC11 Tái chế<br/>• UC12 Import Excel · UC14 Xuất PDF EU"]
         end
-
-        subgraph Monitoring_Module["2. Giám Sát & Báo Cáo"]
-            UC03(["UC03: Xem Dashboard Vòng đời & SoH"])
-            UC14(["UC14: Xuất Chứng nhận Pin PDF chuẩn EU"])
-            UC15(["UC15: Xem Nhật ký Kiểm toán Audit Trail"])
-        end
-
-        subgraph Registry_Module["3. Quản Trị Pack Pin"]
-            UC04(["UC04: Sổ quản lý Pack Pin & Bộ lọc"])
-            UC05(["UC05: Đăng ký Pack Pin mới"])
-            UC06(["UC06: Xem chi tiết Hồ sơ Pin & Xe 1-N"])
-            UC07(["UC07: In Tem Nhãn Mã QR kích thước chuẩn"])
-        end
-
-        subgraph Inspection_Module["4. Kiểm Định & Bảo Hành"]
-            UC08(["UC08: Nhập đo kiểm & Tính SoH tự động"])
-            UC09(["UC09: Kích hoạt đổi pin miễn phí < 70%"])
-        end
-
-        subgraph SecondLife_Module["5. Tái Sinh & Tái Chế"]
-            UC10(["UC10: Điều phối pin vào Trạm sạc BESS"])
-            UC11(["UC11: Lập lệnh thanh lý tái chế < 55%"])
-        end
-
-        subgraph Integration_Module["6. Cổng Mở & Tích Hợp"]
-            UC12(["UC12: Batch Import Lô pin từ Excel"])
-            UC13(["UC13: Quét QR tra cứu Hộ chiếu Công khai"])
+        subgraph ops["CẤP ĐỘ VẬN HÀNH HIỆN TRƯỜNG & CỔNG TRA CỨU"]
+            direction LR
+            techCases["<b>Technician (Kỹ Thuật Viên Xưởng)</b><br/><br/>• UC01 Đăng nhập · UC02 Đăng xuất<br/>• UC03 Dashboard SoH · UC04 Sổ Pack Pin<br/>• UC06 Xem Hồ sơ Xe 1-N · UC07 In Tem QR<br/>• UC08 Nhập đo dung lượng & tính SoH<br/>• UC09 Kích hoạt đổi pin (SoH < 70% / Lỗi cell)"]
+            viewerCases["<b>Auditor / Public User (Thanh Tra & Khách Hàng)</b><br/><br/>• UC06 Xem hồ sơ kỹ thuật pin công khai<br/>• UC13 Quét QR Hộ chiếu số trên di động<br/>• UC14 Tải Giấy chứng nhận pin PDF chuẩn EU"]
         end
     end
 
-    admin --> UC01 & UC02 & UC03 & UC04 & UC10 & UC11 & UC12 & UC14 & UC15 & UC16
-    lead --> UC01 & UC02 & UC03 & UC04 & UC06 & UC07 & UC08 & UC09 & UC10 & UC11 & UC12 & UC14 & UC15 & UC16
-    tech --> UC01 & UC02 & UC03 & UC04 & UC06 & UC07 & UC08 & UC09 & UC16
-    auditor --> UC06 & UC13 & UC14
+    admin --> adminCases
+    lead --> leadCases
+    tech --> techCases
+    viewer --> viewerCases
 
-    classDef adminStyle fill:#1b365d,color:#fff,stroke:#00205b
-    classDef leadStyle fill:#0088ff,color:#fff,stroke:#0055b3
-    classDef techStyle fill:#10b981,color:#fff,stroke:#059669
-    classDef publicStyle fill:#f59e0b,color:#fff,stroke:#d97706
-    class adminStyle,leadStyle,techStyle,publicStyle default
+    classDef actor fill:#1b365d,color:#fff,stroke:#00205b
+    classDef primary fill:#0088ff,color:#fff,stroke:#0055b3
+    classDef standard fill:#10b981,color:#fff,stroke:#059669
+    classDef publicStyle fill:#d97706,color:#fff,stroke:#b45309
+    class admin,lead,tech,viewer actor
+    class adminCases,leadCases primary
+    class techCases standard
+    class viewerCases publicStyle
+    style roles fill:#f8fafc,stroke:#94a3b8,stroke-dasharray: 4 4
+    style system fill:#f0f9ff,stroke:#0088ff,stroke-width:2px
+    style mgmt fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
+    style ops fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
 ```
-
----
 
 ## 3. Ma Trận Phân Quyền Chi Tiết (RBAC Matrix)
 

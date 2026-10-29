@@ -60,21 +60,24 @@ Toàn bộ 16 User Stories đều đã có hành vi mục tiêu định lượng
 flowchart TB
     subgraph roles["Các Tác Nhân (Actors)"]
         direction LR
-        admin(["Administrator<br/>(VinFast HQ)"])
-        lead(["Station Lead<br/>(Trưởng Xưởng / Trạm)"])
-        tech(["Technician<br/>(Kỹ Thuật Viên)"])
-        viewer(["Auditor / Public<br/>(Thanh Tra / Khách Hàng)"])
+        admin(["Administrator (HQ)"])
+        lead(["Station Lead (Trưởng Xưởng)"])
+        tech(["Technician (Kỹ Thuật Viên)"])
+        viewer(["Auditor / Public User"])
     end
 
-    subgraph system["VSF — Ranh Giới Hệ Thống"]
-        direction LR
-        adminCases["<b>Administrator (VinFast HQ)</b><br/><br/>UC01 Đăng nhập · UC02 Đăng xuất<br/>UC03 Xem Dashboard Vòng đời & SoH<br/>UC04 Tra cứu Sổ Pack Pin Toàn quốc<br/>UC10 Điều phối Pin vào Trạm sạc BESS<br/>UC11 Lập lệnh Thanh lý Tái chế<br/>UC12 Batch Import Excel từ VinES<br/>UC14 Xuất Chứng nhận PDF chuẩn EU<br/>UC15 Xem Nhật ký Kiểm toán (Audit Log)<br/>UC16 Quản lý Nhân sự & Phân xưởng"]
-        
-        leadCases["<b>Station Lead (Trưởng Xưởng)</b><br/><br/>UC01 Đăng nhập · UC02 Đăng xuất<br/>UC03 Xem Dashboard Vòng đời & SoH<br/>UC04 Tra cứu Sổ Pack Pin Xưởng<br/>UC06 Xem Chi tiết Hồ sơ Pin & Xe 1-N<br/>UC07 In Tem Nhãn Mã QR chuẩn 50x30mm<br/>UC08 Nhập Đo kiểm Dung lượng & Tính SoH<br/>UC09 Phê duyệt Lệnh Đổi pin mới (SoH < 70%)<br/>UC10 Điều phối Pin vào Trạm sạc BESS<br/>UC11 Lập lệnh Thanh lý Tái chế<br/>UC12 Batch Import Excel từ VinES<br/>UC14 Xuất Chứng nhận PDF chuẩn EU<br/>UC15 Xem Nhật ký Kiểm toán (Audit Log)"]
-        
-        techCases["<b>Technician (Kỹ Thuật Viên)</b><br/><br/>UC01 Đăng nhập · UC02 Đăng xuất<br/>UC03 Xem Dashboard Vòng đời & SoH<br/>UC04 Tra cứu Sổ Pack Pin Xưởng<br/>UC06 Xem Chi tiết Hồ sơ Pin & Xe 1-N<br/>UC07 In Tem Nhãn Mã QR dán Vỏ Pin<br/>UC08 Nhập Đo kiểm Dung lượng & Tính SoH<br/>UC09 Kích hoạt Lệnh Thu hồi Đổi pin"]
-        
-        viewerCases["<b>Auditor / Public User</b><br/><br/>UC06 Xem Chi tiết Hồ sơ Pin Công khai<br/>UC13 Quét Mã QR xem Hộ chiếu Di động<br/>UC14 Tải Giấy Chứng Nhận Pin (PDF)"]
+    subgraph system["VSF — Ranh Giới Hệ Thống (System Boundary)"]
+        direction TB
+        subgraph mgmt["CẤP ĐỘ QUẢN TRỊ & ĐIỀU PHỐI (HQ & TRƯỞNG XƯỞNG)"]
+            direction LR
+            adminCases["<b>Administrator (VinFast HQ)</b><br/><br/>• UC01 Đăng nhập · UC02 Đăng xuất<br/>• UC03 Dashboard SoH · UC15 Audit Log<br/>• UC04 Sổ Pack Pin · UC12 Import Excel<br/>• UC10 Điều phối BESS · UC11 Tái chế<br/>• UC14 Xuất PDF EU · UC16 Quản lý User"]
+            leadCases["<b>Station Lead (Trưởng Xưởng Dịch Vụ)</b><br/><br/>• UC01 Đăng nhập · UC02 Đăng xuất<br/>• UC03 Dashboard SoH · UC15 Audit Log<br/>• UC04 Sổ Pack Pin · UC06 Hồ sơ Xe 1-N<br/>• UC07 In Tem QR · UC08 Đo kiểm SoH<br/>• UC09 Phê duyệt đổi pin (SoH < 70%)<br/>• UC10 Điều phối BESS · UC11 Tái chế<br/>• UC12 Import Excel · UC14 Xuất PDF EU"]
+        end
+        subgraph ops["CẤP ĐỘ VẬN HÀNH HIỆN TRƯỜNG & CỔNG TRA CỨU"]
+            direction LR
+            techCases["<b>Technician (Kỹ Thuật Viên Xưởng)</b><br/><br/>• UC01 Đăng nhập · UC02 Đăng xuất<br/>• UC03 Dashboard SoH · UC04 Sổ Pack Pin<br/>• UC06 Xem Hồ sơ Xe 1-N · UC07 In Tem QR<br/>• UC08 Nhập đo dung lượng & tính SoH<br/>• UC09 Kích hoạt đổi pin (SoH < 70% / Lỗi cell)"]
+            viewerCases["<b>Auditor / Public User (Thanh Tra & Khách Hàng)</b><br/><br/>• UC06 Xem hồ sơ kỹ thuật pin công khai<br/>• UC13 Quét QR Hộ chiếu số trên di động<br/>• UC14 Tải Giấy chứng nhận pin PDF chuẩn EU"]
+        end
     end
 
     admin --> adminCases
@@ -82,14 +85,18 @@ flowchart TB
     tech --> techCases
     viewer --> viewerCases
 
-    classDef actor fill:#333,color:#fff,stroke:#000
-    classDef primary fill:#1b365d,color:#fff,stroke:#00205b
-    classDef techStyle fill:#0088ff,color:#fff,stroke:#0055b3
-    classDef auditStyle fill:#10b981,color:#fff,stroke:#059669
+    classDef actor fill:#1b365d,color:#fff,stroke:#00205b
+    classDef primary fill:#0088ff,color:#fff,stroke:#0055b3
+    classDef standard fill:#10b981,color:#fff,stroke:#059669
+    classDef publicStyle fill:#d97706,color:#fff,stroke:#b45309
     class admin,lead,tech,viewer actor
     class adminCases,leadCases primary
-    class techCases techStyle
-    class viewerCases auditStyle
+    class techCases standard
+    class viewerCases publicStyle
+    style roles fill:#f8fafc,stroke:#94a3b8,stroke-dasharray: 4 4
+    style system fill:#f0f9ff,stroke:#0088ff,stroke-width:2px
+    style mgmt fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
+    style ops fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
 ```
 
 Đặc tả chi tiết từng luồng tiền điều kiện, luồng chính, kịch bản lỗi và hậu điều kiện được duy trì tại [Đặc Tả Use Cases & RBAC](docs/03-use-cases.md).
