@@ -9,7 +9,51 @@ Tuân thủ tiêu chuẩn pin Châu Âu (*EU Battery Regulation 2023/1542*) và 
 
 Hệ thống giải quyết bài toán cốt lõi: Quản trị toàn bộ vòng đời của hàng chục nghìn pack pin xe điện VinFast (từ VF 3, VF 5, VF 6, VF 7, VF 8, VF 9) từ lúc xuất xưởng tại nhà máy VinES Hải Phòng, vận hành trên đường, kiểm định đo chai pin (SoH) định kỳ, kích hoạt đổi pin miễn phí khi SoH < 70%, đến khi tái sinh làm trạm tích điện đệm (BESS) cho mạng lưới trạm sạc V-Green.
 
-### 1.1 Sơ đồ Ca Sử Dụng (Use Cases)
+### 1.1 Product Mind Map
+
+Hệ thống **VSF** được cấu trúc thành **6 phân hệ sản phẩm cốt lõi**:
+
+```mermaid
+mindmap
+  root((VSF — VinFast Battery Passport))
+    Cổng Hộ Chiếu QR Di Động
+      Tra cứu xuất xứ VinES CATL Gotion
+      Chỉ số Live SoH và Chu kỳ sạc Odo
+      Khai báo Dấu chân Carbon gCO2
+      Tỷ lệ khoáng sản tái chế EU
+      Tải Giấy chứng nhận PDF điện tử
+    Quản Trị Pack Pin VinFast
+      Sổ định danh Serial UUID toàn quốc
+      Danh mục dòng xe VF3 đến VF9 Evo200
+      Lịch sử 1-N giữa Xe VIN và Pin
+      Trình tạo và In tem nhãn mã QR
+      Bộ lọc đa chiều theo xưởng
+    Tái Sinh Second-Life BESS
+      Kho pin thu hồi 55% đến 70%
+      Phân bổ vào Trạm sạc V-Green BESS
+      Theo dõi tủ rack trạm cao tốc
+      Lệnh chuyển giao tái chế dưới 55%
+    Kiểm Định và Chẩn Đoán Sức Khỏe
+      Nhập dung lượng đo thực tế và nội trở
+      Thuật toán tính SoH khóa dung lượng gốc
+      Cảnh báo lỗi cell BMS nguy cơ thoát nhiệt
+      Kích hoạt đổi pin miễn phí dưới 70%
+      Lịch sử kiểm định bảo dưỡng
+    Báo Cáo và Tích Hợp Excel
+      Dashboard KPIs vòng đời toàn mạng lưới
+      Biểu đồ phân bố SoH theo dòng xe
+      Cảnh báo lô pin suy hao nhanh
+      Batch Import Excel lô pin VinES
+      Xuất chứng nhận PDF chuẩn Châu Âu
+    Bảo Mật và Quản Trị Hệ Thống
+      Phân quyền RBAC 4 nhóm vai trò
+      Quản lý xưởng dịch vụ toàn quốc
+      Audit Trail lưu vết kiểm toán bất biến
+```
+
+*(Hình ảnh sơ đồ tư duy thiết kế chi tiết được duy trì tại: `docs/mindmap.png`)*
+
+### 1.2 Sơ đồ Ca Sử Dụng (Use Cases)
 
 ```mermaid
 flowchart TB
@@ -44,7 +88,7 @@ flowchart TB
     class viewerCases auditStyle
 ```
 
-### 1.2 Ma Trận Phân Quyền (Roles & Permissions)
+### 1.3 Ma Trận Phân Quyền (Roles & Permissions)
 
 | Chức Năng Nghiệp Vụ | Admin | Station Lead | Technician | Viewer / Public |
 |---|:---:|:---:|:---:|:---:|
