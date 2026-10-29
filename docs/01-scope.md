@@ -1,216 +1,239 @@
-# Phân Tích Đề Bài Top-Down (Research) & Phạm Vi Dự Án — VSF
+# Phân Tích Đề Bài Top-Down (Research) & Đặc Tả Phạm Vi — VSF
 
 > **Dự án:** VSF — VinFast Battery Passport & Second-Life Platform  
-> **Trạng thái:** TARGET V1  
-> **Đối tượng áp dụng:** Hệ sinh thái xe điện VinFast (VF 3, VF 5, VF 6, VF 7, VF 8, VF 9 & Xe máy điện)
+> **Trạng thái:** TARGET V1 (Design & Architecture)  
+> **Phương pháp tiếp cận:** Phân tích Top-Down (Từ Problem Space vĩ mô đến Solution Space kỹ thuật)
 
 ---
 
-## 1. Phân Tích Tầng 1: Bối Cảnh Vĩ Mô & Pháp Lý Quốc Tế (Macro Level)
+# PHẦN I: MIỀN BỐI CẢNH BÀI TOÁN (PROBLEM SPACE)
+
+---
+
+## 1. Tầng 1: Khung Bối Cảnh Vĩ Mô & Pháp Lý Quốc Tế (Macro Level)
 
 ### 1.1. Đạo luật Pin Liên minh Châu Âu (EU Battery Regulation 2023/1542)
 Từ năm 2026, Liên minh Châu Âu (EU) áp dụng quy định bắt buộc đối với toàn bộ xe điện (EV) và pin công nghiệp lưu hành tại thị trường Châu Âu:
-1. **Bắt buộc có Hộ chiếu Pin Số (Digital Battery Passport):** Mỗi pack pin phải có một mã định danh duy nhất (UUID/QR Code) liên kết đến cơ sở dữ liệu số hóa có thể truy cập công khai.
-2. **Khai báo Dấu chân Carbon (Carbon Footprint Declaration):** Bắt buộc công bố tổng lượng CO2 phát thải trong toàn bộ chuỗi cung ứng: từ khai thác khoáng sản (Cobalt, Lithium, Nickel), khâu gia công cell tại nhà máy, đến khâu lắp ráp pack pin.
-3. **Chỉ số Sức khỏe Pin (State of Health - SoH):** Phải lưu giữ lịch sử kiểm định SoH, dung lượng khả dụng còn lại, số chu kỳ sạc/xả để chống gian lận thương mại khi mua bán xe cũ.
-4. **Trách nhiệm Thu hồi & Tái chế (EPR):** Hãng xe phải chịu trách nhiệm thu hồi 100% pin thải bỏ, đạt tỷ lệ tái chế tối thiểu 70% trọng lượng vào năm 2031.
+1. **Digital Battery Passport (Hộ chiếu Pin Số):** Mỗi pack pin bắt buộc phải có mã định danh duy nhất (UUID/QR Code) liên kết đến cơ sở dữ liệu mở.
+2. **Khai báo Dấu chân Carbon (Carbon Footprint Declaration):** Bắt buộc công bố tổng lượng phát thải $CO_2$ tích lũy trong toàn bộ chuỗi cung ứng ($gCO_2eq/kWh$): từ mỏ khai thác khoáng sản (Cobalt, Lithium, Nickel), khâu gia công cell tại nhà máy, đến khâu đóng pack.
+3. **Tỷ lệ Vật liệu Tái chế (Recycled Content Share):** Bắt buộc chứng minh tỷ lệ % kim loại tái chế được tái sử dụng trong quả pin.
+4. **Chỉ số Sức khỏe Pin (State of Health - SoH):** Lưu giữ lịch sử kiểm định SoH, dung lượng khả dụng thực tế, số chu kỳ sạc/xả nhằm bảo vệ quyền lợi người tiêu dùng và chống gian lận thương mại khi mua bán xe cũ.
+5. **Trách nhiệm Thu hồi & Tái chế (EPR):** Hãng xe phải thu hồi 100% pin hết hạn sử dụng, đạt tỷ lệ tái chế kim loại tối thiểu 70% vào năm 2031.
 
 ### 1.2. Thách thức sống còn đối với VinFast toàn cầu
-* VinFast đang mở rộng thị trường xuất khẩu dòng xe **VF 8, VF 9 sang Đức, Pháp, Hà Lan** $\to$ **Nếu không có hệ thống Battery Passport chuẩn hóa, xe VinFast sẽ bị hải quan EU từ chối thông quan hoặc bị áp thuế phát thải carbon phạt kịch khung**.
+* VinFast đang mở rộng xuất khẩu và bàn giao xe điện **VF 8, VF 9 tại Đức, Pháp, Hà Lan**.
+* **Nguy cơ hiện hữu:** Nếu thiếu một nền tảng Hộ chiếu Pin số hóa minh bạch, các lô xe xuất khẩu của VinFast sẽ đối mặt với nguy cơ **bị hải quan EU từ chối thông quan, phạt thuế carbon kịch khung, hoặc đình chỉ quyền kinh doanh tại thị trường Châu Âu**.
 
 ---
 
-## 2. Phân Tích Tầng 2: Bối Cảnh Doanh Nghiệp VinFast (Enterprise Level)
+## 2. Tầng 2: Bối Cảnh Chiến Lược Doanh Nghiệp VinFast (Enterprise Level)
 
-VinFast sở hữu một hệ sinh thái xe điện khép kín độc nhất vô nhị trên thế giới, kéo theo những bài toán quản trị đặc thù:
+Hệ sinh thái VinFast vận hành theo mô hình chuỗi cung ứng và dịch vụ khép kín độc nhất:
 
 ```text
 [Nhà Máy VinES Hải Phòng]
        │
-       ▼ (Lắp ráp & Cấp Serial Pin)
+       ▼ (Cung cấp pack pin mới kèm mã QR)
 [Đội Xe Lăn Bánh: VF 3, VF 5, VF 6, VF 7, VF 8, VF 9 & Taxi Xanh SM]
        │
-       ▼ (Đo kiểm định kỳ tại Xưởng VinFast Service)
-┌──────────────────────────────────────┐
-│  Kiểm tra SoH (Dung lượng pin)       │
-└──────────────────┬───────────────────┘
-                   │
-         ┌─────────┴─────────┐
-         ▼                   ▼
-    SoH >= 70%           SoH < 70%
- (Tiếp tục chạy xe)   (KÍCH HOẠT ĐỔI PIN MIỄN PHÍ)
-                             │
-                             ▼
-              [ĐÁNH GIÁ TÁI SINH SECOND-LIFE]
-              ├── 55% <= SoH < 70%: Tái sinh làm Trạm tích điện BESS V-Green
-              └── SoH < 55% hoặc Lỗi cell: Tái chế kim loại hiếm tại VinES
+       ▼ (Đo kiểm định kỳ tại Xưởng Dịch Vụ VinFast Service)
+┌────────────────────────────────────────────────────────┐
+│  Kiểm định Dung Lượng (SoH) & Độ Lệch Cell (Delta V)   │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+         ┌─────────────────┴─────────────────┐
+         ▼                                   ▼
+    ĐIỀU KIỆN ĐẠT                       KÍCH HOẠT ĐỔI PIN MIỄN PHÍ
+   SoH >= 70% VÀ                       SoH < 70% HOẶC
+  Không lỗi cell                     Lỗi cell / Nguy cơ cháy nổ
+ (Tiếp tục lăn bánh)                         │
+                                             ▼
+                              [ĐÁNH GIÁ TÁI SINH SECOND-LIFE]
+                              ├── 55% <= SoH < 70%: Lắp vào Trạm sạc BESS V-Green
+                              └── SoH < 55% hoặc Hỏng vỏ: Tái chế kim loại tại VinES
 ```
 
 ### 2.1. Chính sách Thuê Pin & Cam kết "Đổi pin miễn phí khi SoH < 70%"
-* Trong hợp đồng thuê pin ký với khách hàng cá nhân và hàng chục nghìn tài xế **GSM (Xanh SM)**, VinFast cam kết: **Khi pin bị chai dung lượng thực tế xuống dưới 70%, VinFast chịu toàn bộ chi phí thu hồi và thay pack pin mới cho khách hàng**.
-* **Nỗi đau (Painpoint):** Cần một hệ thống đo đạc đồng bộ, tự động hóa việc tính toán dung lượng khả dụng để tránh tranh chấp quyền lợi bảo hành hoặc kỹ thuật viên khai khống số liệu.
+* Trong hợp đồng thuê pin ký với khách hàng cá nhân và hàng chục nghìn tài xế **GSM (Xanh SM)**, VinFast cam kết: **Khi dung lượng thực tế giảm xuống dưới 70%, VinFast chịu toàn bộ chi phí thu hồi và thay thế pack pin mới**.
+* **Đặc thù Nghiệp vụ "Xe đổi pin" (Quan hệ 1 - N giữa Xe và Pin):**
+  * Xe điện VinFast (định danh bằng số khung VIN) và Quả pin (định danh bằng Serial Number / UUID) là **hai thực thể độc lập có quan hệ 1 - N theo dòng thời gian**.
+  * Trong suốt vòng đời 15 năm của một chiếc xe, xe có thể được thay thế 2 đến 3 pack pin khác nhau.
+  * Ngược lại, một quả pin sau khi rời khỏi chiếc xe ban đầu có thể được đưa sang trạm sạc BESS hoặc tái chế, hoàn toàn tách rời khỏi chiếc xe gốc.
 
-### 2.2. Bài toán Tái sinh Năng lượng (Second-life BESS cho Trạm sạc V-Green)
-* Một quả pin xe điện khi chai xuống $68%$ không còn phù hợp để chạy xe, nhưng **vẫn còn hơn 50 kWh điện lưu trữ** (bằng lượng điện sinh hoạt cả tuần của một hộ gia đình).
-* Tháng 12/2023, **VinFast đã ký kết thỏa thuận hợp tác với Tập đoàn Marubeni (Nhật Bản)** để tái sử dụng pin cũ làm **Trạm pin lưu trữ năng lượng (BESS)**. Các pack pin này được lắp vào các tủ rack container đặt cạnh các trụ sạc nhanh V-Green trên cao tốc để sạc đệm vào ban đêm và xả ra giờ cao điểm, giảm tải lưới điện quốc gia.
+### 2.2. Bài toán Tái sinh Năng lượng (Liên doanh VinFast - Marubeni BESS)
+* Pin xe điện khi chai xuống $68%$ không còn đủ khả năng phóng dòng cao để tăng tốc trên cao tốc, nhưng **vẫn còn khả năng lưu trữ trên 50 kWh điện** (bằng lượng điện sinh hoạt cả tuần của một hộ gia đình).
+* Tháng 12/2023, **VinFast và Tập đoàn Marubeni (Nhật Bản)** đã chính thức ký kết thỏa thuận hợp tác tái sử dụng pin xe điện đã qua sử dụng làm **Trạm pin lưu trữ năng lượng (BESS - Battery Energy Storage System)**. Các pack pin này được gom thành các tủ rack container đặt tại các trạm sạc nhanh V-Green trên các tuyến cao tốc để sạc đệm ban đêm và xả điện hỗ trợ trụ sạc giờ cao điểm.
 
 ---
 
-## 3. Phân Tích Tầng 3: Bối Cảnh Vận Hành Tại Xưởng Dịch Vụ (Operational Level)
+## 3. Tầng 3: Bối Cảnh Vận Hành Xưởng & Chân Dung Tác Nhân (Operational & Personas)
 
-| Nhóm Đối Tượng | Công Việc Hàng Ngày | Nỗi Đau Lớn Nhất (Painpoint) |
+### 3.1. Bảng phân tích Chân dung Tác nhân & Nỗi đau nghiệp vụ
+
+| Nhóm Tác Nhân | Công Việc Thực Tế Tại Xưởng | Nỗi Đau Lớn Nhất (Painpoint) |
 |---|---|---|
-| **Kỹ thuật viên xưởng (Technician)** | Cắm thiết bị chẩn đoán đo dung lượng, chu kỳ sạc, nội trở khi xe vào bảo dưỡng. | Phải ghi chép số liệu thủ công ra phiếu, tính nhẩm độ chai pin bằng tay, dễ nhầm lẫn giữa các dòng xe (VF 3 dung lượng khác VF 8). |
-| **Trưởng xưởng dịch vụ (Station Lead)** | Ký duyệt biên bản đổi pin mới cho khách hàng; quản lý kho pin thu hồi. | Thiếu căn cứ kiểm toán minh bạch; áp lực tồn kho pin cũ dễ gây nguy cơ cháy nổ nếu không phân loại đúng tình trạng cell pin. |
+| **Kỹ thuật viên xưởng (Technician)** | Cắm thiết bị chẩn đoán chuyên dụng đọc dung lượng, chu kỳ sạc, nội trở khi xe vào bảo dưỡng. | Phải ghi chép số liệu thủ công ra phiếu giấy, tính nhẩm độ chai pin bằng tay, dễ nhầm lẫn dung lượng gốc giữa các dòng xe (VF 3 khác VF 8). |
+| **Trưởng xưởng dịch vụ (Station Lead)** | Ký duyệt biên bản đổi pin mới cho khách hàng; quản lý kho pin thu hồi chờ xử lý. | Thiếu căn cứ số liệu minh bạch; áp lực tồn kho pin cũ dễ gây nguy cơ cháy nổ nếu không phân loại đúng tình trạng cell pin. |
 | **Quản trị viên VinFast (Admin)** | Theo dõi toàn bộ tỷ lệ chai pin của các dòng xe trên toàn quốc; lập kế hoạch sản xuất bù đắp. | "Mù số liệu" tổng quan theo thời gian thực; không nắm được lô pin sản xuất đợt nào có tỷ lệ lỗi tế bào cao để thu hồi sớm. |
-| **Khách hàng / Kiểm toán viên EU** | Quét mã tra cứu thông số khi mua xe cũ hoặc kiểm tra xuất xứ tại cảng. | Hoàn toàn không có cổng tra cứu độc lập; phải phụ thuộc vào lời nói của thợ sửa xe. |
+| **Khách hàng / Kiểm toán viên EU** | Quét mã tra cứu thông số khi mua xe cũ hoặc kiểm tra xuất xứ tại cảng nhập khẩu. | Hoàn toàn không có cổng tra cứu độc lập; phải phụ thuộc vào lời nói của thợ sửa xe. |
+
+### 3.2. Chuẩn hóa Công thức Đo đạc Tự Động (Loại bỏ tính nhẩm thủ công)
+Hệ thống VSF khóa cứng dung lượng danh định gốc ($C_{\text{nominal}}$) theo từng Model xe. Kỹ thuật viên chỉ cần nhập giá trị dung lượng đo thực tế ($C_{\text{measured}}$) từ máy chẩn đoán:
+
+$$\text{SoH (\%)} = \left( \frac{C_{\text{measured}}}{C_{\text{nominal}}} \right) \times 100\%$$
+
+*Bảng tra cứu dung lượng danh định được hệ thống tự động áp dụng:*
+* **VinFast VF 3:** $C_{\text{nominal}} = 18.64\text{ kWh}$ (LFP)
+* **VinFast VF 5 Plus:** $C_{\text{nominal}} = 37.23\text{ kWh}$ (LFP)
+* **VinFast VF 6:** $C_{\text{nominal}} = 59.60\text{ kWh}$ (LFP)
+* **VinFast VF 7 Plus:** $C_{\text{nominal}} = 75.30\text{ kWh}$ (NMC)
+* **VinFast VF 8 Eco/Plus:** $C_{\text{nominal}} = 87.70\text{ kWh}$ (NMC)
+* **VinFast VF 9 Plus:** $C_{\text{nominal}} = 123.00\text{ kWh}$ (NMC)
 
 ---
 
-## 4. Phân Tích Tầng 4: Bốn Giai Đoạn Vòng Đời Pin VinFast (4 Lifecycle Stages)
+# PHẦN II: MIỀN GIẢI PHÁP KỸ THUẬT (SOLUTION SPACE)
 
+---
+
+## 4. Tầng 4: Miền Dữ Liệu & Vòng Đời Thực Thể (Entity Lifecycle Model)
+
+Hệ thống quản lý quả pin qua **4 trạng thái tiến hóa khép kín** (Cradle-to-Cradle):
+
+```mermaid
+stateDiagram-v2
+    [*] --> MANUFACTURED: Xuất xưởng tại VinES
+    MANUFACTURED --> ON_VEHICLE: Gắn lên xe (VIN)
+    
+    state ON_VEHICLE {
+        [*] --> Normal_Running: Hoạt động bình thường
+        Normal_Running --> Maintenance_Inspection: Bảo dưỡng định kỳ xưởng
+        Maintenance_Inspection --> Normal_Running: SoH >= 70% & Cell an toàn
+    }
+
+    ON_VEHICLE --> RECALL_PENDING: SoH < 70% HOẶC Lỗi cell nghiêm trọng
+    RECALL_PENDING --> SECOND_LIFE_BESS: 55% <= SoH < 70% & Cell an toàn
+    RECALL_PENDING --> RECYCLED: SoH < 55% HOẶC Hỏng vỏ / Lỗi cell nặng
+    
+    SECOND_LIFE_BESS --> RECYCLED: Hết tuổi thọ BESS (SoH < 40%)
+    RECYCLED --> DECOMMISSIONED: Đã bóc tách thu hồi Lithium/Cobalt
+    DECOMMISSIONED --> [*]
+```
+
+### Chi tiết các giai đoạn vòng đời:
 1. **Giai đoạn 1: Khai sinh (Manufacturing & Registration):**
-   * Nhà máy VinES Hải Phòng / Gotion / CATL lắp ráp cell thành pack $\to$ Đăng ký mã định danh duy nhất (Serial/QR), lưu thông số gốc (kWh thiết kế, loại cell LFP/NMC, mức phát thải carbon ban đầu).
-2. **Giai đoạn 2: Vận hành trên xe (Active On-Road):**
-   * Lắp lên xe (VF 3 $\to$ VF 9) $\to$ Theo dõi số chu kỳ sạc, quãng đường km lăn bánh $\to$ Ghi nhận lịch sử kiểm định SoH sau mỗi $20.000\text{ km}$ hoặc 12 tháng.
+   * Đăng ký Serial/UUID, liên kết Model xe, lưu trữ thông số tĩnh từ nhà máy: Dấu chân Carbon ban đầu ($gCO_2eq/kWh$), Tỷ lệ vật liệu tái chế (Recycled Content %).
+2. **Giai đoạn 2: Lăn bánh (Active On-Road):**
+   * Gắn với xe qua mã VIN (Quan hệ 1-N). Cập nhật số chu kỳ sạc, Odometer (km), và lịch sử các lần kiểm định tại xưởng.
 3. **Giai đoạn 3: Thu hồi & Tái sinh (Recall & Second-Life Deployment):**
-   * Khi $\text{SoH} < 70\%$ $\to$ Tự động chuyển trạng thái `RECALL_PENDING` $\to$ Đổi pin mới $\to$ Pack pin cũ được kiểm tra nội trở: Nếu đạt chuẩn an toàn ($55\% \le \text{SoH} < 70\%$), chuyển sang gắn vào trạm tích điện `SECOND_LIFE_BESS` V-Green.
-4. **Giai đoạn 4: Tái chế khép kín (Decommission & Material Recycling):**
-   * Khi pin chai dưới $55\%$ hoặc hỏng cell vật lý $\to$ Chuyển về nhà máy thủy luyện để bóc tách kim loại quý Lithium, Cobalt, Nickel tái chế phục vụ mẻ sản xuất mới.
+   * Kích hoạt đổi pin khi: **$\text{SoH} < 70.00\%$ HOẶC $\text{has\_critical\_cell\_fault} = \text{true}$** (Độ lệch điện áp cell quá lớn $\Delta V > 100mV$, nguy cơ thoát nhiệt).
+   * Phân luồng: Nếu đạt điều kiện an toàn, pack pin được giải phóng khỏi xe và gắn vào cụm trạm sạc `SECOND_LIFE_BESS` V-Green.
+4. **Giai đoạn 4: Tái chế nguyên liệu (Material Recycling):**
+   * Pin chai dưới $55\%$ hoặc hư hỏng vật lý được chuyển sang nhà máy thủy luyện để thu hồi khoáng sản.
 
 ---
 
-## 5. Phân Tích Tầng 5: Phạm Vi Hệ Thống (System Boundary)
+## 5. Tầng 5: Đặc Tả Phạm Vi Phần Mềm V1 (System Functional Scope)
 
-* **IN-SCOPE (Phải làm trong V1):**
-  * Module Xác thực & Phân quyền 4 Roles (Admin, Station Lead, Technician, Auditor).
-  * Dashboard trung tâm: Thống kê số lượng pin toàn quốc, biểu đồ phân bố SoH, cảnh báo pin chạm ngưỡng 70%.
-  * Quản lý danh mục Model xe VinFast (VF3: 18.64 kWh LFP, VF5: 37.23 kWh LFP, VF6: 59.6 kWh, VF7: 75.3 kWh, VF8: 87.7 kWh NMC, VF9: 123 kWh NMC).
-  * Sổ quản lý Pack Pin & Kiểm định: Nhập dung lượng thực đo $\to$ Tự động tính SoH và phân luồng trạng thái.
-  * Phân bổ cụm pin cũ vào Trạm sạc V-Green BESS.
-  * Import file Excel lô pin mới từ nhà máy VinES (có preview và báo lỗi từng dòng).
-  * Cổng Hộ chiếu Pin QR công khai (Mobile-friendly, không cần đăng nhập).
-  * Xuất chứng nhận Battery Health Certificate dạng PDF đạt chuẩn EU.
-  * Nhật ký kiểm toán (Audit Trail) ghi vết mọi thay đổi dữ liệu.
-* **OUT-OF-SCOPE (Không làm trong V1):**
-  * Không truyền nhận dữ liệu IoT telematics qua sóng 4G gắn trên xe theo thời gian thực (dữ liệu cập nhật qua các lần kiểm định tại xưởng).
-  * Không tích hợp thanh toán cước thuê pin hàng tháng.
+### 5.1. Khung Đo Lường Thành Công Dự Án (Success Metrics / KPIs)
+
+| Chỉ số Hiệu quả (KPI) | Hiện trạng Thủ công (Baseline) | Mục tiêu VSF V1 |
+|---|---|---|
+| **Thời gian tạo biên bản & phân luồng đổi pin** | 15 – 30 phút / xe (ghi giấy, tính nhẩm) | **< 2 phút** (tính toán & phân luồng tự động) |
+| **Tỷ lệ sai sót dung lượng gốc giữa các dòng xe** | ~5% (nhầm lẫn giữa VF 3, VF 5, VF 8) | **0%** (khóa cứng tự động theo Model ID) |
+| **Thời gian xuất trình Hộ chiếu Pin khi kiểm tra EU** | 3 – 5 ngày (lục tìm hồ sơ nhà máy) | **< 5 giây** (quét mã QR mở ngay Hộ chiếu) |
+| **Tính minh bạch chỉ số Carbon Footprint** | Không theo dõi được theo từng pack | **100% pack pin** có trường Carbon rõ ràng |
+| **Tỷ lệ kiểm soát vòng đời pin Second-Life** | Thất thoát, tự phát không theo dõi | **Theo dõi chính xác 100%** vị trí trạm BESS |
+
+### 5.2. Phạm vi Chức năng V1 (In-Scope V1 Goals)
+* **Xác thực & RBAC 4 Roles:** Đăng nhập JWT Bearer (Admin, Station Lead, Technician, Auditor).
+* **Dashboard Phân tích Sức khỏe Pin:** Biểu đồ phân bố SoH toàn quốc, cảnh báo thu hồi pin $<70\%$.
+* **Sổ Quản lý Pack Pin (Battery Registry):** Quản lý định danh Serial/UUID, lịch sử gắn xe VIN, in tem nhãn QR.
+* **Quy trình Đo kiểm & Tự động Tính SoH:** Khóa cứng dung lượng chuẩn theo Model, nhập dung lượng thực đo $\to$ tự động cập nhật trạng thái và ghi Audit log.
+* **Xử lý Ngoại lệ (Lỗi Cell Vật Lý):** Bổ sung cờ cảnh báo lỗi cell/nguy cơ thoát nhiệt để kích hoạt thu hồi khẩn cấp dù SoH còn trên $70\%$.
+* **Điều phối Trạm sạc V-Green BESS:** Quản lý danh mục trạm sạc, phân bổ pin $55-70\%$ vào tủ rack trạm sạc.
+* **Import Lô Pin từ Excel:** Nhập file danh sách pin mới từ VinES, bao gồm cả trường thông số Carbon Footprint ($gCO_2eq/kWh$) và Tỷ lệ vật liệu tái chế (%).
+* **Cổng Quét QR Công Khai (Mobile Public Passport):** Cho phép bất kỳ ai quét mã QR xem thông số kỹ thuật, SoH, và chỉ số Carbon Footprint mà không cần đăng nhập.
+* **Xuất Giấy Chứng Nhận PDF:** Tạo file Battery Health Certificate có mã QR xác thực chuẩn Châu Âu.
+
+### 5.3. Giới hạn Ngoài Phạm Vi (Non-Goals V1)
+* Không tích hợp telemetry sóng di động truyền dữ liệu cell pin theo thời gian thực (real-time CAN bus streaming).
+* Không quản lý bảo hiểm xe, sửa chữa thân vỏ hoặc bán linh kiện phụ tùng.
+* Không tích hợp cổng thanh toán trực tuyến cước thuê pin hàng tháng.
 
 ---
 
 ## 6. Bản Đồ Tư Duy (Mindmap XMind Structure)
 
-### 6.1. Cấu trúc Cây Nhánh để vẽ trên XMind
+### 6.1. Cây thư mục để vẽ trên phần mềm XMind
 
 ```text
 VSF — VINFAST BATTERY PASSPORT & SECOND-LIFE PLATFORM
 │
-├── 1. BỐI CẢNH & PHÁP LÝ (RESEARCH CONTEXT)
-│   ├── Đạo luật Pin EU 2023/1542
-│   │   ├── Bắt buộc Digital Battery Passport từ 2026
-│   │   ├── Khai báo phát thải Carbon chuỗi cung ứng
-│   │   └── Minh bạch chỉ số chai pin SoH
-│   ├── Bài toán VinFast Toàn Cầu
-│   │   ├── Xuất khẩu VF 8, VF 9 sang thị trường Châu Âu
+├── 1. MIỀN BỐI CẢNH (PROBLEM SPACE)
+│   ├── Tầng 1: Vĩ mô & Pháp lý Quốc tế
+│   │   ├── Đạo luật Pin EU 2023/1542 (Bắt buộc Passport từ 2026)
+│   │   ├── Khai báo Dấu chân Carbon (gCO2eq/kWh) & Tỷ lệ Tái chế (%)
+│   │   └── Thách thức xuất khẩu VF 8, VF 9 sang Châu Âu
+│   ├── Tầng 2: Doanh Nghiệp VinFast
 │   │   ├── Hợp đồng thuê pin: Đổi pin miễn phí khi SoH < 70%
-│   │   └── Hợp tác Marubeni: Tái sinh pin cũ làm trạm BESS V-Green
-│   └── Đối tượng & Đội xe VinFast
-│       ├── VF 3: 18.64 kWh (LFP - Gotion)
-│       ├── VF 5: 37.23 kWh (LFP - VinES)
-│       ├── VF 6 / VF 7: 59.6 - 75.3 kWh
-│       └── VF 8 / VF 9: 87.7 - 123.0 kWh (NMC - CATL)
+│   │   ├── Bản chất nghiệp vụ: Quan hệ 1-N giữa Xe (VIN) và Pin (Serial)
+│   │   └── Liên doanh Marubeni: Tái sinh pin cũ làm BESS trạm sạc V-Green
+│   └── Tầng 3: Vận Hành Xưởng & Tác Nhân
+│       ├── Kỹ thuật viên: Cần công thức SoH tự động (khóa dung lượng gốc)
+│       ├── Trưởng xưởng: Quản lý kho pin thu hồi & an toàn cháy nổ
+│       └── Bảng đo lường thành công (KPIs): Giảm thời gian kiểm định < 2 phút
 │
-├── 2. BỐN GIAI ĐOẠN VÒNG ĐỜI (LIFECYCLE STAGES)
-│   ├── Giai đoạn 1: Khai sinh (Manufacturing)
-│   │   ├── Định danh Serial / In tem QR Hộ chiếu số
-│   │   └── Nhập lô từ nhà máy VinES qua file Excel
-│   ├── Giai đoạn 2: Lăn bánh (Active On-Road)
-│   │   ├── Xe lăn bánh (Khách cá nhân & Taxi Xanh SM)
-│   │   └── Kiểm định định kỳ SoH tại xưởng dịch vụ
-│   ├── Giai đoạn 3: Tái sinh (Second-Life BESS)
-│   │   ├── Kích hoạt thu hồi & đổi pin mới khi SoH < 70%
-│   │   └── Lắp vào cụm tích điện đệm trạm sạc V-Green (55% <= SoH < 70%)
-│   └── Giai đoạn 4: Tái chế (Recycling)
-│       └── Thu hồi kim loại hiếm Lithium/Cobalt (SoH < 55%)
+├── 2. MIỀN GIẢI PHÁP (SOLUTION SPACE)
+│   ├── Tầng 4: Vòng Đời Thực Thể (Lifecycle Model)
+│   │   ├── Giai đoạn 1: Khai sinh (Manufacturing & Carbon data)
+│   │   ├── Giai đoạn 2: Lăn bánh (Active on Vehicle VIN)
+│   │   ├── Giai đoạn 3: Thu hồi (SoH < 70% HOẶC Lỗi cell/nguy cơ thoát nhiệt)
+│   │   ├── Giai đoạn 4: Tái sinh BESS (55% <= SoH < 70% tại trạm V-Green)
+│   │   └── Giai đoạn 5: Tái chế kim loại (SoH < 55% hoặc hỏng vỏ)
+│   └── Tầng 5: Đặc Tả Phạm Vi Phần Mềm V1
+│       ├── In-Scope: Dashboard SoH, Kiểm định tự động, Điều phối BESS
+│       ├── In-Scope: Import Excel lô pin, Xuất PDF chứng nhận EU
+│       ├── In-Scope: Cổng tra cứu QR di động hiển thị Carbon Footprint
+│       └── Non-Goals: Không IoT thời gian thực, không thanh toán cước
 │
-├── 3. TÁC NHÂN & PHÂN QUYỀN (ACTORS & RBAC)
-│   ├── Administrator (VinFast HQ)
-│   │   ├── Giám sát Dashboard toàn quốc
-│   │   └── Quản lý tài khoản & Cấu hình ngưỡng bảo hành
-│   ├── Station Lead (Trưởng Xưởng / Trạm Sạc)
-│   │   ├── Phê duyệt lệnh đổi pin mới
-│   │   └── Phân bổ pin vào tủ rack BESS V-Green
-│   ├── Technician (Kỹ Thuật Viên Xưởng)
-│   │   ├── Nhập số liệu đo kiểm dung lượng & nội trở
-│   │   └── In tem mã QR dán lên vỏ pin
-│   └── Auditor & Public (Thanh Tra EU & Người Dùng)
-│       ├── Quét mã QR tra cứu hộ chiếu pin trên điện thoại
-│       └── Tải Giấy chứng nhận kiểm định PDF
-│
-├── 4. TÍNH NĂNG CỐT LÕI (CORE FEATURES)
-│   ├── F01: Xác thực JWT & Phân quyền 4 vai trò
-│   ├── F02: Dashboard thống kê vòng đời & phân bố SoH
-│   ├── F03: Sổ quản lý Pack Pin VinFast & In tem QR
-│   ├── F04: Kiểm định đo đạc & Thuật toán tính SoH tự động
-│   ├── F05: Quy trình kích hoạt thu hồi đổi pin (< 70%)
-│   ├── F06: Điều phối tái sinh cụm trạm sạc BESS
-│   ├── F07: Nhập dữ liệu lô pin Excel (VinES Import)
-│   ├── F08: Cổng Hộ chiếu Pin QR công khai (Mobile Web)
-│   └── F09: Xuất Giấy chứng nhận kiểm định PDF chuẩn EU
-│
-└── 5. KIẾN TRÚC KỸ THUẬT (TECH STACK)
-    ├── Frontend: React 19 + Vite + Chart.js + QR Engine
+└── 3. NỀN TẢNG CÔNG NGHỆ (TECH STACK)
+    ├── Frontend: React 19 + Vite + Chart.js + QR Code Generator
     ├── Backend: ASP.NET Core (.NET 9) Web API 3 lớp
     ├── Database: PostgreSQL 16 (Schema vsf_battery)
-    └── Security: PBKDF2 Password Hashing + JWT Bearer + Audit Trail
+    └── Security: PBKDF2 Hashing + JWT Bearer + Audit Trail
 ```
 
-### 6.2. Sơ Đồ Mindmap Trực Quan (Mermaid Mindmap)
+### 6.2. Sơ đồ Mindmap Xem Trực Tiếp Trên Markdown (Mermaid)
 
 ```mermaid
 mindmap
   root((VSF — VinFast Battery Passport))
-    1. Bối cảnh & Pháp lý
-      EU Battery Regulation 2023/1542
-        Bắt buộc Battery Passport từ 2026
-        Khai báo phát thải Carbon
-        Minh bạch độ chai pin SoH
-      Chiến lược VinFast
-        Xuất khẩu VF8, VF9 sang EU
-        Cam kết đổi pin miễn phí khi SoH dưới 70%
-        Liên doanh Marubeni tái sinh pin làm BESS
-      Đội xe VinFast
-        VF3: 18.64 kWh LFP
-        VF5: 37.23 kWh LFP
-        VF8: 87.7 kWh NMC
-        VF9: 123 kWh CATL
-    2. Vòng đời 4 Giai đoạn
-      Giai đoạn 1: Khai sinh
-        Xuất xưởng tại VinES
-        Gán mã Serial và tem QR
-      Giai đoạn 2: Lăn bánh
-        Chạy trên xe VF cá nhân và Xanh SM
-        Đo kiểm SoH định kỳ tại xưởng
-      Giai đoạn 3: Tái sinh Second-Life
-        Kích hoạt đổi pin khi SoH dưới 70%
-        Lắp vào trạm sạc BESS V-Green 55-70%
-      Giai đoạn 4: Tái chế
-        Thu hồi lithium cobalt khi SoH dưới 55%
-    3. Phân quyền RBAC 4 Roles
-      Admin: Quản trị toàn quốc & phân quyền
-      Station Lead: Phê duyệt đổi pin & điều phối BESS
-      Technician: Đo dung lượng & in tem QR
-      Auditor Public: Quét QR tra cứu trên di động
-    4. Tính năng Cốt lõi
-      Dashboard phân tích SoH toàn mạng lưới
-      Kiểm định tự động tính SoH
-      Điều phối trạm sạc BESS
-      Import Excel lô pin từ nhà máy
-      Cổng quét QR công khai
-      Xuất chứng nhận PDF chuẩn EU
-    5. Kiến trúc Công nghệ
-      Frontend: React 19 + Vite + Chart.js
-      Backend: ASP.NET Core Web API 3 lớp
-      Database: PostgreSQL 16
-      Security: PBKDF2 + JWT + Audit Log
+    Problem Space
+      Tang 1: Phap ly EU
+        EU Battery Regulation 2023/1542
+        Carbon Footprint Declaration
+        Recycled Content Share
+        Thong quan xuat khau VF8 VF9
+      Tang 2: Doanh nghiep VinFast
+        Cam ket doi pin mien phi khi SoH duoi 70%
+        Quan he 1-N giua Xe VIN va Pin Serial
+        Lien doanh Marubeni BESS cho V-Green
+      Tang 3: Van hanh Xuong
+        Khoa dung luong danh dinh theo Model
+        Cong thuc tinh SoH tu dong
+        KPI: Kiem dinh duoi 2 phut, loi 0%
+    Solution Space
+      Tang 4: Vong doi Thuc the
+        Khai sinh: VinES cap Serial va Carbon data
+        Lan banh: Gan xe VIN va theo doi Odo
+        Thu hoi: SoH duoi 70% hoac Loi cell BMS
+        Tai sinh BESS: 55-70% tai tram V-Green
+        Tai che: Duoi 55% boc tach Lithium Cobalt
+      Tang 5: Pham vi V1
+        Dashboard phan tich SoH toan quoc
+        Quy trinh do kiem tu dong hoa
+        Cong QR di dong cong khai co Carbon data
+        Xuat file PDF chung nhan chuan EU
+        Non-Goals: Khong IoT 4G, khong thu cuoc
 ```
