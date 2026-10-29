@@ -21,47 +21,66 @@
 
 ## 2. Sơ Đồ Ca Sử Dụng Toàn Hệ Thống (System Use Case Diagram)
 
+Mỗi ca sử dụng được phân rã thành một node độc lập, tổ chức theo phân hệ chức năng tương thích chuẩn kiến trúc UML và mẫu thiết kế chuẩn của hệ thống:
+
 ```mermaid
-flowchart TB
-    subgraph roles["Cac Tac Nhan — Actors"]
-        direction LR
+flowchart LR
+    subgraph left["Actors Dieu Hanh"]
+        direction TB
         admin(["Quan Tri Vien HQ"])
         lead(["Truong Xuong Dich Vu"])
-        tech(["Ky Thuat Vien Do Kiem"])
-        viewer(["Kiem Toan va Khach Hang"])
     end
 
     subgraph system["VSF — Ranh Gioi He Thong"]
         direction TB
-        subgraph row1["Cap Do Quan Tri va Dieu Phoi"]
+        subgraph sec1["Truy Cap & Quan Tri"]
             direction LR
-            adminBox["<b>Quan Tri Vien VinFast HQ</b><br/><br/>• UC01 Dang nhap · UC02 Dang xuat<br/>• UC03 Dashboard SoH · UC15 Audit Log<br/>• UC04 So Pack Pin · UC12 Import Excel<br/>• UC10 Dieu phoi BESS · UC11 Tai che<br/>• UC14 Xuat PDF EU · UC16 Quan tri User"]
-            leadBox["<b>Truong Xuong Dich Vu</b><br/><br/>• UC01 Dang nhap · UC02 Dang xuat<br/>• UC03 Dashboard SoH · UC15 Audit Log<br/>• UC04 So Pack Pin · UC06 Ho so Xe 1-N<br/>• UC07 In Tem QR · UC08 Do kiem SoH<br/>• UC09 Duyet doi pin khi SoH duoi 70%<br/>• UC10 Dieu phoi BESS · UC11 Tai che"]
+            uc01["UC01 Dang Nhap & RBAC"]
+            uc02["UC02 Dang Xuat"]
+            uc03["UC03 Dashboard SoH"]
+            uc16["UC16 Quan Tri User"]
         end
-        subgraph row2["Cap Do Van Hanh Hien Truong va Cong Tra Cuu"]
+        subgraph sec2["Quan Ly Pack & Ho Chieu"]
             direction LR
-            techBox["<b>Ky Thuat Vien Do Kiem</b><br/><br/>• UC01 Dang nhap · UC02 Dang xuat<br/>• UC03 Dashboard SoH · UC04 So Pack Pin<br/>• UC06 Ho so Xe 1-N · UC07 In Tem QR<br/>• UC08 Do dung luong va tinh SoH<br/>• UC09 Kich hoat doi pin khi loi cell"]
-            viewerBox["<b>Kiem Toan va Khach Hang</b><br/><br/>• UC06 Tra cuu ho so pin cong khai<br/>• UC13 Quet QR Ho chieu tren di dong<br/>• UC14 Tai Chung nhan pin PDF chuan EU"]
+            uc04["UC04 So Pack Pin"]
+            uc05["UC05 Tao Ho Chieu"]
+            uc07["UC07 In Tem QR"]
+            uc12["UC12 Import Excel"]
+        end
+        subgraph sec3["Do Kiem & Second-Life"]
+            direction LR
+            uc06["UC06 Ho So Xe 1-N"]
+            uc08["UC08 Do Kiem SoH"]
+            uc09["UC09 Doi Pin & Loi Cell"]
+            uc10["UC10 Dieu Phoi BESS"]
+            uc11["UC11 Thanh Ly Tai Che"]
+        end
+        subgraph sec4["Kiem Dinh & Tra Cuu"]
+            direction LR
+            uc13["UC13 Quet QR Di Dong"]
+            uc14["UC14 Xuat PDF Chuan EU"]
+            uc15["UC15 Xem Audit Log"]
         end
     end
 
-    admin --> adminBox
-    lead --> leadBox
-    tech --> techBox
-    viewer --> viewerBox
+    subgraph right["Actors Hien Truong & Cong Chung"]
+        direction TB
+        tech(["Ky Thuat Vien Do Kiem"])
+        viewer(["Khach Hang & Kiem Toan"])
+    end
+
+    admin --> uc01 & uc02 & uc03 & uc04 & uc05 & uc10 & uc11 & uc12 & uc14 & uc15 & uc16
+    lead --> uc01 & uc02 & uc03 & uc04 & uc06 & uc07 & uc08 & uc09 & uc10 & uc11 & uc14 & uc15
+    tech --> uc01 & uc02 & uc03 & uc04 & uc06 & uc07 & uc08 & uc09
+    viewer --> uc06 & uc13 & uc14
 
     classDef actor fill:#1b365d,color:#fff,stroke:#00205b
-    classDef primary fill:#0088ff,color:#fff,stroke:#0055b3
-    classDef standard fill:#10b981,color:#fff,stroke:#059669
-    classDef publicStyle fill:#d97706,color:#fff,stroke:#b45309
+    classDef usecase fill:#0088ff,color:#fff,stroke:#0055b3
     class admin,lead,tech,viewer actor
-    class adminBox,leadBox primary
-    class techBox standard
-    class viewerBox publicStyle
-    style roles fill:#f8fafc,stroke:#94a3b8,stroke-dasharray: 4 4
-    style system fill:#f0f9ff,stroke:#0088ff,stroke-width:2px
-    style row1 fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
-    style row2 fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
+    class uc01,uc02,uc03,uc04,uc05,uc06,uc07,uc08,uc09,uc10,uc11,uc12,uc13,uc14,uc15,uc16 usecase
+    style left fill:#f8fafc,stroke:#94a3b8,stroke-dasharray:5 5
+    style right fill:#f8fafc,stroke:#94a3b8,stroke-dasharray:5 5
+    style system fill:#f0f9ff,stroke:#0088ff,stroke-dasharray:5 5
 ```
 
 ## 3. Ma Trận Phân Quyền Chi Tiết (RBAC Matrix)
