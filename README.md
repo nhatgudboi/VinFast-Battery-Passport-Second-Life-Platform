@@ -11,7 +11,19 @@ Hệ thống giải quyết bài toán cốt lõi: Quản trị toàn bộ vòng
 
 ### 1.1 Product mind map
 
-![VSF Product mind map](docs/mindmap.png)
+Hệ thống **VSF** được trực quan hóa toàn diện qua Bản đồ Tư duy Sản phẩm (Product Mind Map), bao gồm sơ đồ tổng quan và hai cụm phân hệ nghiệp vụ chi tiết:
+
+#### A. Bức tranh Tổng quan Toàn hệ thống (High-Level Overview)
+
+![VSF Product mind map - Tổng quan](docs/mindmap.png)
+
+#### B. Phân hệ Cổng Hộ Chiếu QR, Quản Trị Pack Pin & Tái Sinh Second-Life BESS
+
+![Phân hệ Hộ chiếu QR Di động & Quản trị Vòng đời Pin](docs/images/mindmap-passport-lifecycle.png)
+
+#### C. Phân hệ Kiểm Định Dung Lượng SoH, Báo Cáo Excel & Quản Trị Hệ Thống
+
+![Phân hệ Kiểm định & Quản trị Hệ thống](docs/images/mindmap-inspection-ops.png)
 
 ### 1.2 Sơ đồ Ca Sử Dụng (Use Cases)
 
