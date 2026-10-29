@@ -57,63 +57,46 @@ Toàn bộ 16 User Stories đều đã có hành vi mục tiêu định lượng
 ### 1.3 Sơ Đồ Ca Sử Dụng (Use Cases)
 
 ```mermaid
-flowchart LR
-    subgraph left["Actors Dieu Hanh"]
-        direction TB
-        admin(["Quan Tri Vien HQ"])
-        lead(["Truong Xuong Dich Vu"])
+flowchart TB
+    subgraph roles["Actors"]
+        direction LR
+        admin(["HQ Admin"])
+        lead(["Station Lead"])
+        tech(["Field Tech"])
+        viewer(["Auditor / Public"])
     end
 
-    subgraph system["VSF — Ranh Gioi He Thong"]
+    subgraph system["VSF — System Boundary"]
         direction TB
-        subgraph sec1["Truy Cap & Quan Tri"]
+        subgraph row1["Governance and Station Management"]
             direction LR
-            uc01["UC01 Dang Nhap & RBAC"]
-            uc02["UC02 Dang Xuat"]
-            uc03["UC03 Dashboard SoH"]
-            uc16["UC16 Quan Tri User"]
+            adminBox["<b>HQ Admin</b><br/><br/>• UC01 Login · UC02 Logout<br/>• UC03 SoH Dashboard<br/>• UC04 Battery Registry<br/>• UC05 Create Passport<br/>• UC10 BESS Allocation<br/>• UC11 Recycle Disposal<br/>• UC12 Excel Batch Import<br/>• UC14 Export EU PDF<br/>• UC15 View Audit Log<br/>• UC16 User Management"]
+            leadBox["<b>Station Lead</b><br/><br/>• UC01 Login · UC02 Logout<br/>• UC03 SoH Dashboard<br/>• UC04 Battery Registry<br/>• UC06 Vehicle History<br/>• UC07 Print QR Label<br/>• UC08 SoH Diagnostic<br/>• UC09 Swap on Cell Fault<br/>• UC10 BESS Allocation<br/>• UC11 Recycle Disposal<br/>• UC14 Export EU PDF<br/>• UC15 View Audit Log"]
         end
-        subgraph sec2["Quan Ly Pack & Ho Chieu"]
+        subgraph row2["Field Operations and Public Verification"]
             direction LR
-            uc04["UC04 So Pack Pin"]
-            uc05["UC05 Tao Ho Chieu"]
-            uc07["UC07 In Tem QR"]
-            uc12["UC12 Import Excel"]
-        end
-        subgraph sec3["Do Kiem & Second-Life"]
-            direction LR
-            uc06["UC06 Ho So Xe 1-N"]
-            uc08["UC08 Do Kiem SoH"]
-            uc09["UC09 Doi Pin & Loi Cell"]
-            uc10["UC10 Dieu Phoi BESS"]
-            uc11["UC11 Thanh Ly Tai Che"]
-        end
-        subgraph sec4["Kiem Dinh & Tra Cuu"]
-            direction LR
-            uc13["UC13 Quet QR Di Dong"]
-            uc14["UC14 Xuat PDF Chuan EU"]
-            uc15["UC15 Xem Audit Log"]
+            techBox["<b>Field Technician</b><br/><br/>• UC01 Login · UC02 Logout<br/>• UC03 SoH Dashboard<br/>• UC04 Battery Registry<br/>• UC06 Vehicle History<br/>• UC07 Print QR Label<br/>• UC08 Capacity and SoH Test<br/>• UC09 Cell Fault Swap Trigger"]
+            viewerBox["<b>Auditor and Public User</b><br/><br/>• UC06 Public Battery Search<br/>• UC13 Mobile QR Passport Scan<br/>• UC14 Download EU Cert PDF"]
         end
     end
 
-    subgraph right["Actors Hien Truong & Cong Chung"]
-        direction TB
-        tech(["Ky Thuat Vien Do Kiem"])
-        viewer(["Khach Hang & Kiem Toan"])
-    end
-
-    admin --> uc01 & uc02 & uc03 & uc04 & uc05 & uc10 & uc11 & uc12 & uc14 & uc15 & uc16
-    lead --> uc01 & uc02 & uc03 & uc04 & uc06 & uc07 & uc08 & uc09 & uc10 & uc11 & uc14 & uc15
-    tech --> uc01 & uc02 & uc03 & uc04 & uc06 & uc07 & uc08 & uc09
-    viewer --> uc06 & uc13 & uc14
+    admin --> adminBox
+    lead --> leadBox
+    tech --> techBox
+    viewer --> viewerBox
 
     classDef actor fill:#1b365d,color:#fff,stroke:#00205b
-    classDef usecase fill:#0088ff,color:#fff,stroke:#0055b3
+    classDef primary fill:#0088ff,color:#fff,stroke:#0055b3
+    classDef standard fill:#10b981,color:#fff,stroke:#059669
+    classDef publicStyle fill:#d97706,color:#fff,stroke:#b45309
     class admin,lead,tech,viewer actor
-    class uc01,uc02,uc03,uc04,uc05,uc06,uc07,uc08,uc09,uc10,uc11,uc12,uc13,uc14,uc15,uc16 usecase
-    style left fill:#f8fafc,stroke:#94a3b8,stroke-dasharray:5 5
-    style right fill:#f8fafc,stroke:#94a3b8,stroke-dasharray:5 5
-    style system fill:#f0f9ff,stroke:#0088ff,stroke-dasharray:5 5
+    class adminBox,leadBox primary
+    class techBox standard
+    class viewerBox publicStyle
+    style roles fill:#f8fafc,stroke:#94a3b8,stroke-dasharray: 4 4
+    style system fill:#f0f9ff,stroke:#0088ff,stroke-width:2px
+    style row1 fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
+    style row2 fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
 ```
 
 Đặc tả chi tiết từng luồng tiền điều kiện, luồng chính, kịch bản lỗi và hậu điều kiện được duy trì tại [Đặc Tả Use Cases & RBAC](docs/03-use-cases.md).
