@@ -35,13 +35,16 @@ flowchart TB
         direction TB
         subgraph row1["Governance and Station Management"]
             direction LR
-            adminBox["<b>HQ Admin</b><br/><br/>• UC01 Login · UC02 Logout<br/>• UC03 SoH Dashboard<br/>• UC04 Battery Registry<br/>• UC05 Create Passport<br/>• UC10 BESS Allocation<br/>• UC11 Recycle Disposal<br/>• UC12 Excel Batch Import<br/>• UC14 Export EU PDF<br/>• UC15 View Audit Log<br/>• UC16 User Management"]
-            leadBox["<b>Station Lead</b><br/><br/>• UC01 Login · UC02 Logout<br/>• UC03 SoH Dashboard<br/>• UC04 Battery Registry<br/>• UC06 Vehicle History<br/>• UC07 Print QR Label<br/>• UC08 SoH Diagnostic<br/>• UC09 Swap on Cell Fault<br/>• UC10 BESS Allocation<br/>• UC11 Recycle Disposal<br/>• UC14 Export EU PDF<br/>• UC15 View Audit Log"]
+            adminBox["<b>HQ Admin</b><br/><br/>• UC01-02: Auth (Login/Out)<br/>• UC03: SoH Dashboard<br/>• UC04: Battery Registry<br/>• UC05: Create Passport<br/>• UC10: BESS Allocation<br/>• UC11: Recycle Disposal<br/>• UC12: Excel Batch Import<br/>• UC14: Export EU PDF<br/>• UC15: View Audit Log<br/>• UC16: User Management"]
+            
+            leadBox["<b>Station Lead</b><br/><br/>• UC01-02: Auth (Login/Out)<br/>• UC03: SoH Dashboard<br/>• UC04: Battery Registry<br/>• UC06: Vehicle History<br/>• UC07: Print QR Label<br/>• UC08: SoH Diagnostic<br/>• UC09: Swap on Cell Fault<br/>• UC10: BESS Allocation<br/>• UC11: Recycle Disposal<br/>• UC14: Export EU PDF<br/>• UC15: View Audit Log"]
         end
-        subgraph row2["Field Operations and Public Verification"]
+        
+        subgraph row2["Field Operations & Public Verification"]
             direction LR
-            techBox["<b>Field Technician</b><br/><br/>• UC01 Login · UC02 Logout<br/>• UC03 SoH Dashboard<br/>• UC04 Battery Registry<br/>• UC06 Vehicle History<br/>• UC07 Print QR Label<br/>• UC08 Capacity and SoH Test<br/>• UC09 Cell Fault Swap Trigger"]
-            viewerBox["<b>Auditor and Public User</b><br/><br/>• UC06 Public Battery Search<br/>• UC13 Mobile QR Passport Scan<br/>• UC14 Download EU Cert PDF"]
+            techBox["<b>Field Technician</b><br/><br/>• UC01-02: Auth (Login/Out)<br/>• UC03: SoH Dashboard<br/>• UC04: Battery Registry<br/>• UC06: Vehicle History<br/>• UC07: Print QR Label<br/>• UC08: Capacity & SoH Test<br/>• UC09: Cell Fault Swap"]
+            
+            viewerBox["<b>Auditor / Public User</b><br/><br/>• UC06: Public Battery Search<br/>• UC13: Mobile QR Scan<br/>• UC14: Download EU Cert"]
         end
     end
 
@@ -54,10 +57,12 @@ flowchart TB
     classDef primary fill:#0088ff,color:#fff,stroke:#0055b3
     classDef standard fill:#10b981,color:#fff,stroke:#059669
     classDef publicStyle fill:#d97706,color:#fff,stroke:#b45309
+    
     class admin,lead,tech,viewer actor
     class adminBox,leadBox primary
     class techBox standard
     class viewerBox publicStyle
+    
     style roles fill:#f8fafc,stroke:#94a3b8,stroke-dasharray: 4 4
     style system fill:#f0f9ff,stroke:#0088ff,stroke-width:2px
     style row1 fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
