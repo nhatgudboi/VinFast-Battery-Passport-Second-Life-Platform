@@ -553,8 +553,8 @@ flowchart LR
     ClientVal -->|Hợp lệ| APIVal["Gửi Request Tới API Backend"]
     ClientVal -->|Sai sót| Action
     
-    APIVal -->|Thành công (200/201)| Success["Hiển Thị Toast Thành Công & Làm Mới Bảng"]
-    APIVal -->|Lỗi nghiệp vụ (400/422)| Action
-    APIVal -->|Hết phiên (401)| Login["Chuyển Hướng Về SCR-01 Login"]
-    APIVal -->|Không đủ quyền (403)| Forbidden["Chuyển Hướng Về SCR-90 Forbidden"]
+    APIVal -->|"Thành công (200/201)"| Success["Hiển Thị Toast Thành Công & Làm Mới Bảng"]
+    APIVal -->|"Lỗi nghiệp vụ (400/422)"| Action
+    APIVal -->|"Hết phiên (401)"| Login["Chuyển Hướng Về SCR-01 Login"]
+    APIVal -->|"Không đủ quyền (403)"| Forbidden["Chuyển Hướng Về SCR-90 Forbidden"]
 ```
