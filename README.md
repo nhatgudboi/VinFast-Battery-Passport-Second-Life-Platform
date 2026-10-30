@@ -130,7 +130,79 @@ Tầng Backend API bắt buộc thực thi cưỡng chế phân quyền RBAC và
 
 Kiến trúc thông tin tổ chức không gian làm việc số hóa dựa trên năng lực nghiệp vụ thực tế của chuỗi xưởng dịch vụ và vòng đời pin VinFast. Phân quyền màn hình và điều hướng tuân thủ nghiêm ngặt ma trận RBAC, đồng thời mọi màn hình đều chuẩn hóa 8 trạng thái giao diện (Loading, Empty, Validation, API Error, 401, 403, Saving, Success).
 
-### 2.1 Sơ Đồ Cây Kiến Trúc Thông Tin (Sitemap Tree)
+### 2.1 Sơ Đồ Kiến Trúc Thông Tin & Thành Phần Màn Hình (Information Architecture Diagram)
+
+Sơ đồ kiến trúc thông tin chi tiết hóa toàn bộ các màn hình, thành phần dữ liệu và chức năng nghiệp vụ trực quan:
+
+```mermaid
+flowchart TB
+    subgraph publicPortal["1. Public Portal (Mobile-First — Khong Can Dang Nhap)"]
+        direction LR
+        scr01["<b>SCR-01: Dang Nhap Login</b><br/>• VinFast SSO / Email<br/>• JWT Credential Auth<br/>• Session Guard"]
+        scr02["<b>SCR-02: Public Passport QR</b><br/>• SoH Health Gauge<br/>• Carbon Footprint kgCO2<br/>• Recycled Content Co/Ni/Li<br/>• Anonymous Service History<br/>• Download EU Cert PDF"]
+    end
+
+    subgraph workspace["2. Authenticated Workspace (Phan He Quan Tri & Van Hanh)"]
+        direction TB
+        
+        subgraph row1["Phan He Tong Quan & Quan Ly Pack Pin"]
+            direction LR
+            scr10["<b>SCR-10: Dashboard SoH</b><br/>• 4 Life-cycle KPI Cards<br/>• SoH Distribution Chart<br/>• Degradation Curve<br/>• Delta V Cell Alerts"]
+            scr20["<b>SCR-20: Battery Registry</b><br/>• Full Search & Filters<br/>• Life-cycle Status Badges<br/>• Server Pagination<br/>• Batch Action Toolbar"]
+            scr21["<b>SCR-21: Create Passport</b><br/>• VinES Serial Number<br/>• LFP/NMC Chem Specs<br/>• Nominal Capacity kWh<br/>• EU Carbon & Recycled %"]
+            scr22["<b>SCR-22: Passport Detail</b><br/>• 1-N Vehicle Timeline<br/>• Historic ODO Tracking<br/>• Multi-cycle SoH History<br/>• Export Action Trigger"]
+            scr23["<b>SCR-23: QR Label Print</b><br/>• 100x75mm Live Preview<br/>• Public Passport URL QR<br/>• Industrial Thermal Print"]
+        end
+
+        subgraph row2["Phan He Do Kiem, Chan Doan & Second-Life BESS"]
+            direction LR
+            scr30["<b>SCR-30: Inspections Log</b><br/>• Diagnostic Event List<br/>• Delta V Status Filter<br/>• SoH Threshold Audit"]
+            scr31["<b>SCR-31: Diagnostic Entry</b><br/>• C_measured & Impedance<br/>• Cell Vmax / Vmin Input<br/>• Auto SoH Calculation<br/>• Auto Swap Rule Warning"]
+            scr32["<b>SCR-32: Swap Approval</b><br/>• 1-N Vin-Pack Rebinding<br/>• Old Pack SoH Audit<br/>• New Pack Allocation<br/>• Lead Signature Auth"]
+            scr40["<b>SCR-40: Second-Life BESS</b><br/>• 55-70% SoH Buffer Pool<br/>• V-Green Fast Charger Hub<br/>• Container Cluster Map"]
+            scr41["<b>SCR-41: Recycle Disposal</b><br/>• SoH Under 55% Scrapping<br/>• Black Mass Handover<br/>• Permanent Lock Event"]
+        end
+
+        subgraph row3["Phan He Quan Tri, Tich Hop & Kiem Toan"]
+            direction LR
+            scr50["<b>SCR-50: Excel Import</b><br/>• VinES Factory Batch File<br/>• In-browser Validation<br/>• Atomic Commit Process"]
+            scr60["<b>SCR-60: Reports & PDF</b><br/>• EU Compliance Audit<br/>• Fleet Degradation Trends<br/>• Vector PDF Certificate"]
+            scr70["<b>SCR-70: Audit Trail</b><br/>• Immutable Event Log<br/>• User IP & Timestamp<br/>• Before / After Diff JSON"]
+            scr80["<b>SCR-80: User Admin</b><br/>• Account & Role Matrix<br/>• Service Workshop Bind<br/>• Active Status Switch"]
+            scr81["<b>SCR-81: User Form Modal</b><br/>• Full Name & Staff Code<br/>• Role RBAC Assignment<br/>• Temporary Password"]
+            scr85["<b>SCR-85/90: Profile & 403</b><br/>• Password & Sessions<br/>• RBAC Route Guard Safe Back"]
+        end
+    end
+
+    publicPortal -.-> workspace
+    scr20 -.-> scr21
+    scr20 -.-> scr22
+    scr20 -.-> scr23
+    scr30 -.-> scr31
+    scr30 -.-> scr32
+    scr40 -.-> scr41
+    scr80 -.-> scr81
+
+    classDef publicStyle fill:#1e293b,stroke:#0f172a,color:#f8fafc
+    classDef overview fill:#0088ff,stroke:#0055b3,color:#ffffff
+    classDef inspection fill:#10b981,stroke:#059669,color:#ffffff
+    classDef adminStyle fill:#6366f1,stroke:#4338ca,color:#ffffff
+    classDef modalStyle fill:#f0f9ff,stroke:#0088ff,color:#0055b3
+    
+    class scr01,scr02 publicStyle
+    class scr10,scr20 overview
+    class scr21,scr22,scr23,scr31,scr32,scr41,scr81 modalStyle
+    class scr30,scr40 inspection
+    class scr50,scr60,scr70,scr80,scr85 adminStyle
+    
+    style publicPortal fill:#f8fafc,stroke:#94a3b8,stroke-dasharray: 4 4
+    style workspace fill:#f0fdf4,stroke:#10b981,stroke-width:2px
+    style row1 fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
+    style row2 fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
+    style row3 fill:#ffffff,stroke:#cbd5e1,stroke-width:1px
+```
+
+### 2.2 Sơ Đồ Cây Kiến Trúc Thông Tin (Sitemap Tree)
 
 ```text
 VSF — VinFast Battery Passport & Second-Life Platform
@@ -160,7 +232,7 @@ VSF — VinFast Battery Passport & Second-Life Platform
     └── /403                           [SCR-90: Màn Hình Từ Chối Truy Cập (Forbidden)]
 ```
 
-### 2.2 Sơ Đồ Phân Cấp Màn Hình (Screen Hierarchy Flow)
+### 2.3 Sơ Đồ Phân Cấp Màn Hình (Screen Hierarchy Flow)
 
 Đăng nhập xác thực tại `SCR-01` dẫn trực tiếp vào Authenticated Shell. Không gian làm việc sở hữu thanh điều hướng bên (Sidebar) tương ứng với vai trò đăng nhập; các tương tác thêm mới, đo kiểm, phê duyệt đổi pin và in tem QR được mở thông qua các Modal chuyên dụng. Điều hướng vượt thẩm quyền được Router Guard chặn đứng và chuyển hướng an toàn về màn hình `SCR-90 Forbidden`.
 
@@ -205,7 +277,7 @@ flowchart TB
     class BattCreate,BattDetail,BattQR,InspCreate,SwapApprove,RecycleModal,UserModal,PDFExport sub
 ```
 
-### 2.3 Bảng Danh Mục Màn Hình & Phân Quyền (Screen Inventory)
+### 2.4 Bảng Danh Mục Màn Hình & Phân Quyền (Screen Inventory)
 
 | Mã Màn Hình | Tên Màn Hình & Phân Hệ | Dạng Trình Bày | URL Route | Phân Quyền Truy Cập (RBAC) | Ca Sử Dụng Liên Quan |
 | :--- | :--- | :--- | :--- | :--- | :--- |
