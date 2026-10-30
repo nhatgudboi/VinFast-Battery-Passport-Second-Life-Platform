@@ -2,6 +2,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: vsf-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: vsf_battery
       POSTGRES_USER: postgres
@@ -10,11 +11,14 @@ services:
       - "127.0.0.1:54332:5432"
     volumes:
       - vsf_postgres_data:/var/lib/postgresql/data
+      - ./src/database/vsf_battery.sql:/docker-entrypoint-initdb.d/01-init-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d vsf_battery"]
-      interval: 2s
+      interval: 3s
       timeout: 5s
       retries: 20
+      start_period: 5s
 
 volumes:
   vsf_postgres_data:
+    name: vsf_postgres_16_data
