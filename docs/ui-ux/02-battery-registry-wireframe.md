@@ -6,7 +6,15 @@
 
 ---
 
-## 1. Màn Hình Danh Sách: Sổ Quản Lý Pack Pin (SCR-20)
+## 1. Hình Ảnh Giao Diện Thực Tế (Live Screenshots)
+
+### Sổ Quản Lý Pack Pin & Gắn Kết Xe 1-N (SCR-20)
+![Sổ Quản Lý Pack Pin](../images/ui-battery-registry.png)
+
+### Modal Đo Kiểm & Chẩn Đoán SoH Tự Động (SCR-22)
+![Modal Đo Kiểm Chẩn Đoán](../images/ui-diagnostic-modal.png)
+
+## 2. Màn Hình Danh Sách: Sổ Quản Lý Pack Pin (SCR-20)
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -38,7 +46,7 @@
 
 ---
 
-## 2. Modal Kỹ Thuật Viên Đo Kiểm & Chẩn Đoán SoH Tự Động (SCR-22)
+## 3. Modal Kỹ Thuật Viên Đo Kiểm & Chẩn Đoán SoH Tự Động (SCR-22)
 *Khi Kỹ thuật viên bấm nút **"[⚡ Đo kiểm]"**, cửa sổ Modal mở ra với thiết kế 2 cột chuẩn xưởng:*
 
 ```text
@@ -72,7 +80,7 @@
 
 ---
 
-## 3. Quy Tắc Phản Hồi Tức Thì Tại Modal Đo Kiểm
+## 4. Quy Tắc Phản Hồi Tức Thì Tại Modal Đo Kiểm
 1. Khi KTV gõ số `162.00` vào ô dung lượng đo:
    * Hệ thống tự động lấy $162.00 / 240.00 \times 100\% = \mathbf{67.50\%}$.
    * Kim đồng hồ Gauge bên phải quay ngay lập tức về mức $67.5\%$ và đổi sang màu cam đỏ.

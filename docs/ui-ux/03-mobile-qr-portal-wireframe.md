@@ -7,7 +7,13 @@
 
 ---
 
-## 1. Bản Vẽ Bố Cục Mobile-First (ASCII Wireframe Layout)
+## 1. Hình Ảnh Giao Diện Thực Tế (Live Screenshot)
+
+<div align="center">
+  <img src="../images/ui-mobile-qr-portal.png" alt="Cổng Hộ Chiếu Pin QR Di Động" width="380" />
+</div>
+
+## 2. Bản Vẽ Bố Cục Mobile-First (ASCII Wireframe Layout)
 
 ```text
 ┌─────────────────────────────────────────┐
@@ -63,7 +69,7 @@
 
 ---
 
-## 2. Chi Tiết Các Khối Nội Dung & Mock Data
+## 3. Chi Tiết Các Khối Nội Dung & Mock Data
 
 ### 2.1 Khối Định Danh & Chứng Nhận Quốc Tế (Header)
 * **Logo VinFast chữ V mạ chrome:** Đặt góc trên cùng kèm dòng chữ xanh tinh tế: `DIGITAL BATTERY PASSPORT`.

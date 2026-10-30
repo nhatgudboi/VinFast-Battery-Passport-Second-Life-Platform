@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VinFast Battery Passport & Second-Life Platform (VSF)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- TOP NAVBAR -->
+  <header class="vf-navbar">
+    <div class="vf-brand">
+      <div class="vf-logo-badge">
+        <svg viewBox="0 0 40 40" class="vf-logo-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 2L4 32H12L20 16L28 32H36L20 2Z" fill="url(#vf-grad-brand)"/>
+          <path d="M20 10L10 30H15L20 20L25 30H30L20 10Z" fill="#FFFFFF" fill-opacity="0.9"/>
+          <defs>
+            <linearGradient id="vf-grad-brand" x1="4" y1="2" x2="36" y2="32" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#3B82F6"/>
+              <stop offset="1" stop-color="#1462D2"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="vf-brand-text">
+        <span class="vf-brand-title">VINFAST</span>
+        <span class="vf-brand-subtitle">BATTERY PASSPORT & SECOND-LIFE PLATFORM</span>
+      </div>
+    </div>
+
+    <!-- MAIN NAVIGATION TABS -->
+    <nav class="vf-nav-tabs">
+      <button class="nav-tab active" data-tab="dashboard">
+        <span class="tab-icon">📊</span> Dashboard SoH
+      </button>
+      <button class="nav-tab" data-tab="registry">
+        <span class="tab-icon">⚡</span> Sổ Quản Lý Pack Pin
+      </button>
+      <button class="nav-tab" data-tab="mobile-portal">
+        <span class="tab-icon">📱</span> Cổng Hộ Chiếu QR Mobile
+      </button>
+    </nav>
+
+    <!-- USER & ACTIONS -->
+    <div class="vf-header-actions">
+      <div class="vf-search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="globalSearchInput" placeholder="Tìm Serial / VIN (Ctrl+K)...">
+      </div>
+      <button class="vf-icon-btn" id="btnNotification" title="Cảnh báo hệ thống">
+        <span class="icon">🔔</span>
+        <span class="notification-badge">2</span>
+      </button>
+      <div class="vf-user-profile">
+        <div class="user-avatar">TL</div>
+        <div class="user-info">
+          <span class="user-name">Trần Văn Lead</span>
+          <span class="user-role">Trưởng Xưởng • Ocean Park</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="vf-main-content">
+    
+    <!-- =================================================================== -->
+    <!-- TAB 1: DASHBOARD GIÁM SÁT SỨC KHỎE PIN TOÀN MẠNG LƯỚI (SCR-10)       -->
+    <!-- =================================================================== -->
+    <section id="tab-dashboard" class="vf-tab-panel active">
+      <!-- DASHBOARD HEADER -->
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Bảng Điều Khiển Sức Khỏe Pin Toàn Mạng Lưới</h1>
+          <p class="panel-desc">Giám sát 12,450 pack pin trên toàn quốc • Chuẩn EU Battery Regulation 2023/1542</p>
+        </div>
+        <div class="header-filters">
+          <select id="timeFilter" class="vf-select">
+            <option value="today">Thời gian: Hôm nay</option>
+            <option value="7days">7 ngày qua</option>
+            <option value="30days">30 ngày qua</option>
+          </select>
+          <select id="workshopFilter" class="vf-select">
+            <option value="all">Toàn bộ Xưởng Dịch Vụ</option>
+            <option value="ocean_park">VinFast Ocean Park (Hà Nội)</option>
+            <option value="pham_hung">VinFast Phạm Hùng (Hà Nội)</option>
+            <option value="thao_dien">VinFast Thảo Điền (TP.HCM)</option>
+          </select>
+          <button class="vf-btn vf-btn-outline" id="btnExportDashboardPdf">
+            <span>📥</span> Xuất Báo Cáo
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 KPI CARDS -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">TỔNG PACK PIN QUẢN LÝ</span>
+            <span class="kpi-badge badge-blue">Toàn quốc</span>
+          </div>
+          <div class="kpi-value" id="kpiTotalPacks">12,450</div>
+          <div class="kpi-footer text-success">
+            <span>▲ +120 pack</span> mới xuất xưởng từ VinES Hải Phòng tuần này
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">ĐANG LĂN BÁNH TRÊN XE</span>
+            <span class="kpi-badge badge-green">Hoạt động tốt</span>
+          </div>
+          <div class="kpi-value" id="kpiActiveVehicle">9,820</div>
+          <div class="kpi-footer">
+            <span>78.9% đội xe</span> • Sức khỏe trung bình: <strong class="text-success">88.6% SoH</strong>
+          </div>
+        </div>
+
+        <div class="kpi-card kpi-warning-glow">
+          <div class="kpi-header">
+            <span class="kpi-label">ĐẠT CHUẨN ĐỔI BẢO HÀNH</span>
+            <span class="kpi-badge badge-red">SoH &lt; 70%</span>
+          </div>
+          <div class="kpi-value text-danger" id="kpiRecallPending">48</div>
+          <div class="kpi-footer text-danger">
+            <span>⚠️ 100% đã mở lệnh đổi</span> miễn phí theo chính sách VinFast
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">ĐANG TÁI SINH TRẠM BESS</span>
+            <span class="kpi-badge badge-cyan">Second-Life</span>
+          </div>
+          <div class="kpi-value text-cyan" id="kpiSecondLife">2,150</div>
+          <div class="kpi-footer">
+            <span>17.3% sản lượng</span> • Trạm sạc cao tốc V-Green Marubeni
+          </div>
+        </div>
+      </div>
+
+      <!-- TWO COLUMNS: SOH DISTRIBUTION & VEHICLE MODELS -->
+      <div class="dashboard-charts-grid">
+        <!-- CARD 1: SOH DISTRIBUTION -->
+        <div class="vf-card">
+          <div class="card-header">
+            <h3 class="card-title">Phân Bố Sức Khỏe Pack Pin (SoH Distribution)</h3>
+            <span class="card-badge">Toàn bộ 12,450 pack</span>
+          </div>
+          <div class="card-body">
+            <!-- SOH PROGRESS BARS -->
+            <div class="soh-bar-group">
+              <div class="soh-bar-header">
+                <span class="soh-category text-success">
+                  <span class="status-dot dot-green"></span> Pin Khỏe Tối Ưu (SoH &ge; 85%)
+                </span>
+                <span class="soh-count"><strong>8,120</strong> pack (65.2%)</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill fill-green" style="width: 65.2%;"></div>
+              </div>
+            </div>
+
+            <div class="soh-bar-group">
+              <div class="soh-bar-header">
+                <span class="soh-category text-warning">
+                  <span class="status-dot dot-yellow"></span> Pin Trung Bình (70% &le; SoH &lt; 85%)
+                </span>
+                <span class="soh-count"><strong>1,700</strong> pack (13.7%)</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill fill-yellow" style="width: 13.7%;"></div>
+              </div>
+            </div>
+
+            <div class="soh-bar-group">
+              <div class="soh-bar-header">
+                <span class="soh-category text-danger">
+                  <span class="status-dot dot-red"></span> Pin Chai Cần Thu Hồi (SoH &lt; 70%)
+                </span>
+                <span class="soh-count text-danger"><strong>48</strong> pack (0.4%)</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill fill-red" style="width: 0.4%; min-width: 8px;"></div>
+              </div>
+            </div>
+
+            <div class="soh-policy-box">
+              <div class="policy-icon">🛡️</div>
+              <div class="policy-content">
+                <strong>Cam kết Vàng Thuê Pin VinFast:</strong> Khi dung lượng đo được giảm xuống dưới 70.0% hoặc phát hiện chênh lệch cell nguy hiểm (&Delta;V &gt; 50mV), VinFast chịu 100% chi phí thu hồi và thay thế pack pin mới cho khách hàng.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: FLEET MODEL BREAKDOWN -->
+        <div class="vf-card">
+          <div class="card-header">
+            <h3 class="card-title">Cơ Cấu Pack Pin Theo Dòng Xe VinFast</h3>
+            <span class="card-badge">VF 3 &rarr; VF 9</span>
+          </div>
+          <div class="card-body">
+            <div class="model-list">
+              <div class="model-row">
+                <div class="model-name-group">
+                  <span class="model-tag">VF 3</span>
+                  <span class="model-desc">LFP 18.64 kWh • 52Ah</span>
+                </div>
+                <div class="model-bar-wrap">
+                  <div class="mini-bar-fill" style="width: 14.9%;"></div>
+                </div>
+                <div class="model-stats">1,850 pack (14.9%)</div>
+              </div>
+
+              <div class="model-row highlight-taxi">
+                <div class="model-name-group">
+                  <span class="model-tag tag-taxi">VF 5 Plus</span>
+                  <span class="model-desc">LFP 37.23 kWh • Xanh SM</span>
+                </div>
+                <div class="model-bar-wrap">
+                  <div class="mini-bar-fill fill-blue" style="width: 27.5%;"></div>
+                </div>
+                <div class="model-stats"><strong>3,420 pack (27.5%)</strong></div>
+              </div>
+
+              <div class="model-row">
+                <div class="model-name-group">
+                  <span class="model-tag">VF 6 Plus</span>
+                  <span class="model-desc">LFP 59.6 kWh • 170Ah</span>
+                </div>
+                <div class="model-bar-wrap">
+                  <div class="mini-bar-fill" style="width: 12.8%;"></div>
+                </div>
+                <div class="model-stats">1,600 pack (12.8%)</div>
+              </div>
+
+              <div class="model-row">
+                <div class="model-name-group">
+                  <span class="model-tag">VF 7 Plus</span>
+                  <span class="model-desc">NMC 75.3 kWh • 210Ah</span>
+                </div>
+                <div class="model-bar-wrap">
+                  <div class="mini-bar-fill" style="width: 9.7%;"></div>
+                </div>
+                <div class="model-stats">1,210 pack (9.7%)</div>
+              </div>
+
+              <div class="model-row highlight-taxi">
+                <div class="model-name-group">
+                  <span class="model-tag tag-taxi">VF 8 Plus</span>
+                  <span class="model-desc">NMC 87.7 kWh • Xanh SM</span>
+                </div>
+                <div class="model-bar-wrap">
+                  <div class="mini-bar-fill fill-blue" style="width: 23.2%;"></div>
+                </div>
+                <div class="model-stats"><strong>2,890 pack (23.2%)</strong></div>
+              </div>
+
+              <div class="model-row">
+                <div class="model-name-group">
+                  <span class="model-tag">VF 9 Plus</span>
+                  <span class="model-desc">NMC 123.0 kWh • 330Ah</span>
+                </div>
+                <div class="model-bar-wrap">
+                  <div class="mini-bar-fill" style="width: 11.9%;"></div>
+                </div>
+                <div class="model-stats">1,480 pack (11.9%)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 3: EARLY WARNING & THERMAL RUNAWAY RISKS -->
+      <div class="vf-card mt-4">
+        <div class="card-header warning-header">
+          <div>
+            <h3 class="card-title text-danger">⚠️ Danh Sách Cảnh Báo Sớm & Nguy Cơ Thoát Nhiệt (Early Warnings)</h3>
+            <span class="card-subtitle">Hệ thống AI tự động phát hiện lệch áp cell (&Delta;V &gt; 50mV) và sụt SoH bất thường</span>
+          </div>
+          <span class="badge-live-pulse">🔴 2 Sự cố cần xử lý gấp</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="vf-table-responsive">
+            <table class="vf-table">
+              <thead>
+                <tr>
+                  <th>MỨC ĐỘ</th>
+                  <th>MÃ SERIAL PIN</th>
+                  <th>XE ĐANG GẮN</th>
+                  <th>DÒNG XE</th>
+                  <th>SOH HIỆN TẠI</th>
+                  <th>LỆCH ÁP CELL (&Delta;V)</th>
+                  <th>LÝ DO CẢNH BÁO</th>
+                  <th>HÀNH ĐỘNG</th>
+                </tr>
+              </thead>
+              <tbody id="earlyWarningsTableBody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: SỔ QUẢN LÝ PACK PIN & GẮN KẾT XE 1-N (SCR-20)                 -->
+    <!-- =================================================================== -->
+    <section id="tab-registry" class="vf-tab-panel">
+      <!-- REGISTRY HEADER -->
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Sổ Quản Lý Pack Pin & Gắn Kết Xe 1-N</h1>
+          <p class="panel-desc">Quản lý vòng đời thực thể, tra cứu Hộ chiếu số và kích hoạt kiểm định đo đạc</p>
+        </div>
+        <div class="header-actions-group">
+          <button class="vf-btn vf-btn-outline" id="btnImportExcel">
+            <span>📄</span> Nhập Lô Excel (.xlsx)
+          </button>
+          <button class="vf-btn vf-btn-primary" id="btnRegisterNewBattery">
+            <span>+</span> Đăng Ký Pin Mới
+          </button>
+        </div>
+      </div>
+
+      <!-- MULTI-DIMENSIONAL FILTERS -->
+      <div class="vf-filters-bar">
+        <div class="filter-item search-grow">
+          <label>Tìm kiếm nhanh</label>
+          <input type="text" id="registrySearch" class="vf-input" placeholder="Nhập Serial (VF-BAT...), VIN hoặc biển số xe...">
+        </div>
+        <div class="filter-item">
+          <label>Dòng xe VinFast</label>
+          <select id="filterModelSelect" class="vf-select">
+            <option value="ALL">Tất cả Model xe</option>
+            <option value="VF 3">VinFast VF 3</option>
+            <option value="VF 5 Plus">VinFast VF 5 Plus</option>
+            <option value="VF 6 Plus">VinFast VF 6 Plus</option>
+            <option value="VF 7 Plus">VinFast VF 7 Plus</option>
+            <option value="VF 8 Plus">VinFast VF 8 Plus</option>
+            <option value="VF 9 Plus">VinFast VF 9 Plus</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Trạng thái vòng đời</label>
+          <select id="filterStatusSelect" class="vf-select">
+            <option value="ALL">Tất cả trạng thái</option>
+            <option value="ON_VEHICLE">Đang gắn trên xe</option>
+            <option value="RECALL_PENDING">Chờ đổi bảo hành</option>
+            <option value="SECOND_LIFE_BESS">Tái sinh Trạm BESS</option>
+            <option value="RECYCLED">Tái chế phế liệu</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Kho / Xưởng dịch vụ</label>
+          <select id="filterWorkshopSelect" class="vf-select">
+            <option value="ALL">Tất cả địa điểm</option>
+            <option value="Ocean Park">Xưởng Ocean Park</option>
+            <option value="Phạm Hùng">Xưởng Phạm Hùng</option>
+            <option value="Thảo Điền">Xưởng Thảo Điền</option>
+            <option value="BESS">Trạm BESS V-Green</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- MAIN DATA TABLE -->
+      <div class="vf-card mt-3">
+        <div class="card-header table-header-flex">
+          <div class="table-results-count" id="tableResultCount">
+            Hiển thị <strong>5 pack pin tiêu biểu</strong> (Tổng 12,450 pack)
+          </div>
+          <div class="table-tools">
+            <button class="tool-btn" id="btnRefreshTable" title="Tải lại dữ liệu">🔄</button>
+            <button class="tool-btn" id="btnExportTableCsv" title="Tải CSV">📥</button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="vf-table-responsive">
+            <table class="vf-table table-hover">
+              <thead>
+                <tr>
+                  <th>MÃ SERIAL PACK PIN</th>
+                  <th>DÒNG XE & CÔNG NGHỆ</th>
+                  <th>SOH ĐO ĐƯỢC</th>
+                  <th>ĐỘ LỆCH CELL (&Delta;V)</th>
+                  <th>TRẠNG THÁI VÒNG ĐỜI</th>
+                  <th>XE / VỊ TRÍ GẮN HIỆN TẠI</th>
+                  <th>THAO TÁC</th>
+                </tr>
+              </thead>
+              <tbody id="batteryRegistryTableBody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: CỔNG HỘ CHIẾU PIN QR DI ĐỘNG CHUẨN EU 2023/1542 (SCR-02)     -->
+    <!-- =================================================================== -->
+    <section id="tab-mobile-portal" class="vf-tab-panel">
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">Cổng Tra Cứu Hộ Chiếu Pin QR Di Động (EU 2023/1542)</h1>
+          <p class="panel-desc">Mô phỏng trải nghiệm người dùng thực tế khi quét mã QR tem pin bằng điện thoại thông minh</p>
+        </div>
+        <div class="mobile-switcher">
+          <label>Xem Hộ Chiếu Pack Pin:</label>
+          <select id="mobileBatterySelector" class="vf-select">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+      </div>
+
+      <!-- MOBILE DEVICE SIMULATOR CONTAINER -->
+      <div class="mobile-simulator-stage">
+        <div class="iphone-frame">
+          <div class="iphone-notch">
+            <div class="camera-lens"></div>
+            <div class="speaker-grill"></div>
+          </div>
+
+          <!-- PHONE SCREEN CONTENT -->
+          <div class="iphone-screen" id="iphoneScreenContent">
+            <!-- Header bar inside mobile -->
+            <div class="mobile-top-bar">
+              <span class="mobile-time" id="mobileClock">09:41</span>
+              <div class="mobile-status-icons">
+                <span>5G</span>
+                <span>📶</span>
+                <span>🔋 98%</span>
+              </div>
+            </div>
+
+            <div class="mobile-app-header">
+              <div class="mobile-brand">
+                <span class="mobile-v-logo">V</span>
+                <div class="mobile-v-titles">
+                  <strong>VINFAST</strong>
+                  <small>DIGITAL BATTERY PASSPORT</small>
+                </div>
+              </div>
+              <div class="eu-flag-badge">
+                <span>🇪🇺</span> EU 2023/1542
+              </div>
+            </div>
+
+            <!-- PASSPORT DYNAMIC BODY -->
+            <div class="mobile-body-scroll" id="mobilePassportBody">
+              <!-- Rendered via JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =================================================================== -->
+  <!-- MODAL: KỸ THUẬT VIÊN ĐO KIỂM & TÍNH SOH TỰ ĐỘNG (SCR-22)             -->
+  <!-- =================================================================== -->
+  <div class="vf-modal-backdrop" id="diagnosticModal">
+    <div class="vf-modal-container">
+      <div class="vf-modal-header">
+        <div class="modal-title-group">
+          <h2 class="modal-title">⚡ Phiếu Đo Kiểm & Chẩn Đoán Sức Khỏe Pack Pin</h2>
+          <span class="modal-subtitle" id="modalBatteryTitle">Mã Serial: VF-BAT-VF8-2023-00912</span>
+        </div>
+        <button class="modal-close-btn" id="btnCloseModal">&times;</button>
+      </div>
+
+      <div class="vf-modal-body">
+        <!-- 2-COLUMN DIAGNOSTIC GRID -->
+        <div class="diagnostic-grid">
+          
+          <!-- LEFT COLUMN: INPUT RAW MEASUREMENTS -->
+          <div class="diagnostic-inputs">
+            <h4 class="diag-section-title">1. NHẬP SỐ ĐO TỪ MÁY CHẨN ĐOÁN (OBD-II)</h4>
+            
+            <div class="form-group">
+              <label>Dung lượng chuẩn danh định ($C_{	ext{nominal}}$)</label>
+              <div class="input-with-unit locked-field">
+                <input type="text" id="diagNominalCapacity" class="vf-input" value="240.0" readonly>
+                <span class="input-unit">Ah (Chuẩn Model)</span>
+              </div>
+              <small class="field-hint text-muted">Khóa cứng theo Model ID để chống gian lận đo kiểm</small>
+            </div>
+
+            <div class="form-group">
+              <label>Dung lượng thực tế đo được ($C_{	ext{measured}}$) <span class="required">*</span></label>
+              <div class="input-with-unit">
+                <input type="number" id="diagMeasuredCapacity" class="vf-input input-highlight" step="0.1" value="162.0">
+                <span class="input-unit">Ampe-giờ (Ah)</span>
+              </div>
+              <small class="field-hint">Nhập số Ah máy xưởng đo được sau chu kỳ sạc/xả đầy</small>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Điện áp cell Max ($V_{max}$) <span class="required">*</span></label>
+                <div class="input-with-unit">
+                  <input type="number" id="diagCellVMax" class="vf-input" step="0.001" value="3.652">
+                  <span class="input-unit">V</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Điện áp cell Min ($V_{min}$) <span class="required">*</span></label>
+                <div class="input-with-unit">
+                  <input type="number" id="diagCellVMin" class="vf-input" step="0.001" value="3.628">
+                  <span class="input-unit">V</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Nội trở Pack Pin</label>
+                <div class="input-with-unit">
+                  <input type="number" id="diagInternalResistance" class="vf-input" step="0.1" value="14.2">
+                  <span class="input-unit">m&Omega;</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Nhiệt độ đỉnh khi sạc</label>
+                <div class="input-with-unit">
+                  <input type="number" id="diagTemperature" class="vf-input" step="0.5" value="34.5">
+                  <span class="input-unit">&deg;C</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: REALTIME CALCULATOR & DECISION ENGINE -->
+          <div class="diagnostic-results">
+            <h4 class="diag-section-title">2. KẾT QUẢ TÍNH TOÁN THỜI GIAN THỰC (REALTIME)</h4>
+
+            <!-- GAUGE VISUALIZATION -->
+            <div class="soh-gauge-container">
+              <svg class="soh-circular-gauge" viewBox="0 0 160 160">
+                <circle class="gauge-bg" cx="80" cy="80" r="70" />
+                <circle class="gauge-progress" id="gaugeProgressCircle" cx="80" cy="80" r="70" />
+              </svg>
+              <div class="gauge-center-text">
+                <span class="gauge-percentage" id="calcSohValue">67.5%</span>
+                <span class="gauge-label">ĐIỂM SỨC KHỎE (SoH)</span>
+              </div>
+            </div>
+
+            <!-- DELTA V CHECK -->
+            <div class="calc-metric-box">
+              <div class="metric-row">
+                <span>Độ lệch điện áp cell (&Delta;V = Vmax - Vmin):</span>
+                <strong id="calcDeltaVText">0.024 Volt (24 mV)</strong>
+              </div>
+              <div class="metric-status-badge" id="calcCellStatusBadge">
+                <span class="badge-dot"></span> Cell Hoạt Động Cân Bằng (&le; 50mV)
+              </div>
+            </div>
+
+            <!-- CONCLUSION & DECISION BOX -->
+            <div class="decision-card" id="calcDecisionCard">
+              <div class="decision-icon" id="calcDecisionIcon">⚠️</div>
+              <div class="decision-text">
+                <h5 id="calcDecisionTitle">ĐỦ ĐIỀU KIỆN ĐỔI PIN BẢO HÀNH MIỄN PHÍ</h5>
+                <p id="calcDecisionDesc">Do SoH = 67.5% &lt; 70.0% theo cam kết chính sách VinFast. Đề xuất chuyển pack pin cũ sang Trạm sạc tích điện BESS V-Green.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="vf-modal-footer">
+        <button class="vf-btn vf-btn-ghost" id="btnCancelModal">Đóng</button>
+        <button class="vf-btn vf-btn-outline" id="btnSaveInspection">Lưu Biên Bản Đo Kiểm</button>
+        <button class="vf-btn vf-btn-primary" id="btnExecuteSwap">
+          <span>⚡</span> TẠO LỆNH ĐỔI PIN BẢO HÀNH NGAY
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="vf-toast-container" id="toastContainer"></div>
+
+  <!-- SCRIPTS -->
+  <script src="app.js"></script>
+</body>
+</html>

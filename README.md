@@ -303,13 +303,41 @@ flowchart TB
 
 Đặc tả chi tiết từng thành phần giao diện, chức năng trong màn hình, hợp đồng 8 trạng thái UI/UX và luồng thao tác điển hình được duy trì đầy đủ tại tài liệu kỹ thuật [Kiến Trúc Thông Tin & Phân Cấp Giao Diện (Information Architecture)](docs/04-information-architecture.md).
 
-### 3.3 Bản Vẽ Giao Diện Chi Tiết & Bộ Dữ Liệu Mẫu (UI/UX Wireframes & Mock Data)
+### 3.3 Giao Diện Thực Tế & Bộ Dữ Liệu Mẫu (Live UI Screenshots & Mock Data)
 
-Hệ thống giao diện được thiết kế theo ngôn ngữ nhận diện thương hiệu cao cấp **VinFast Electric High-Tech** (Tone màu xanh chủ đạo `#1462D2`, nền Navy tối `#0B192C`, mã màu trạng thái pin chuẩn quốc tế), tài liệu và bản vẽ chi tiết gồm:
+Giao diện hệ thống được hiện thực hóa theo ngôn ngữ nhận diện thương hiệu cao cấp **VinFast Electric High-Tech** (Tone màu xanh chủ đạo `#1462D2`, nền Dark Navy `#0B192C`, trạng thái Sức khỏe Pin SoH chuẩn quốc tế). Mã nguồn giao diện chạy thực tế tại thư mục [`src/frontend/`](src/frontend/) với đầy đủ dữ liệu mẫu (Mock Data):
+
+#### 1. Dashboard Giám Sát Sức Khỏe Pin Toàn Mạng Lưới (SCR-10)
+Bảng điều khiển trung tâm với 4 thẻ KPIs thời gian thực, biểu đồ phân bố độ chai SoH, cơ cấu pack pin theo từng dòng xe (VF 3 đến VF 9) và danh sách cảnh báo sớm nguy cơ thoát nhiệt:
+
+![Dashboard Tổng Quan Sức Khỏe Pin](docs/images/ui-dashboard-kpi.png)
+
+![Bảng Cảnh Báo Sớm Nguy Cơ Thoát Nhiệt](docs/images/ui-dashboard-warnings.png)
+
+#### 2. Sổ Quản Lý Pack Pin & Gắn Kết Xe 1-N (SCR-20)
+Quản lý toàn diện vòng đời từng pack pin theo số Serial duy nhất, bộ lọc đa chiều (dòng xe, trạng thái, xưởng dịch vụ) và các nút thao tác nhanh:
+
+![Sổ Quản Lý Pack Pin Toàn Quốc](docs/images/ui-battery-registry.png)
+
+#### 3. Modal Kỹ Thuật Viên Đo Kiểm & Tính Toán SoH Tự Động (SCR-22)
+Hộp thoại chẩn đoán 2 cột tại cầu nâng xưởng: Nhập số đo thực tế từ máy quét OBD-II, hệ thống tự động tính SoH thời gian thực trên đồng hồ Gauge tròn, kiểm tra lệch áp cell $\Delta V \le 0.05\text{V}$ và tự động kích hoạt nút *"Tạo Lệnh Đổi Pin Bảo Hành"*:
+
+![Modal Đo Kiểm Chẩn Đoán SoH Tự Động](docs/images/ui-diagnostic-modal.png)
+
+#### 4. Cổng Hộ Chiếu Pin QR Di Động Chuẩn EU 2023/1542 (SCR-02)
+Mô phỏng trải nghiệm quét tem QR bằng điện thoại thông minh: Không cần đăng nhập, tốc độ phản hồi $< 50\text{ms}$, hiển thị điểm sức khỏe SoH, chỉ số Dấu chân Carbon ($54.2\text{ kgCO}_2\text{eq/kWh}$), Tỷ lệ vật liệu tái chế ($18.5\%$) và nút tải chứng nhận PDF chính thức:
+
+<div align="center">
+  <img src="docs/images/ui-mobile-qr-portal.png" alt="Cổng Hộ Chiếu Pin QR Di Động Chuẩn EU" width="380" />
+</div>
+
+---
+
+**Tài liệu đặc tả chi tiết và bộ dữ liệu mẫu:**
 * 🎨 [Hệ Thống Thiết Kế UI/UX VinFast (Design System & Guidelines)](docs/ui-ux/README.md)
-* 📊 [Bản Vẽ Wireframe Màn Hình 1: Dashboard Sức Khỏe Pin & Giám Sát Mạng Lưới (SCR-10)](docs/ui-ux/01-dashboard-wireframe.md)
-* ⚡ [Bản Vẽ Wireframe Màn Hình 2: Sổ Quản Lý Pack Pin & Modal Đo Kiểm Chẩn Đoán (SCR-20 & SCR-22)](docs/ui-ux/02-battery-registry-wireframe.md)
-* 📱 [Bản Vẽ Wireframe Màn Hình 3: Cổng Hộ Chiếu Pin QR Di Động Chuẩn EU 2023/1542 (SCR-02)](docs/ui-ux/03-mobile-qr-portal-wireframe.md)
+* 📊 [Bản Vẽ Wireframe Màn Hình 1: Dashboard Sức Khỏe Pin (SCR-10)](docs/ui-ux/01-dashboard-wireframe.md)
+* ⚡ [Bản Vẽ Wireframe Màn Hình 2: Sổ Quản Lý Pack Pin (SCR-20 & SCR-22)](docs/ui-ux/02-battery-registry-wireframe.md)
+* 📱 [Bản Vẽ Wireframe Màn Hình 3: Cổng Hộ Chiếu Pin QR (SCR-02)](docs/ui-ux/03-mobile-qr-portal-wireframe.md)
 * 📦 [Tập Dữ Liệu Mẫu Đầy Đủ (Mock Data JSON chuẩn VinFast VF 3 đến VF 9)](docs/ui-ux/mock-data.json)
 
 ## 3. Kiến Trúc C4 (C4 Architecture)

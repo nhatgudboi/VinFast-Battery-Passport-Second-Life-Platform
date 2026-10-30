@@ -6,7 +6,13 @@
 
 ---
 
-## 1. Bản Vẽ Bố Cục Chi Tiết (ASCII Wireframe Layout)
+## 1. Hình Ảnh Giao Diện Thực Tế (Live Screenshot)
+
+![Dashboard Tổng Quan Sức Khỏe Pin](../images/ui-dashboard-kpi.png)
+
+![Bảng Cảnh Báo Sớm](../images/ui-dashboard-warnings.png)
+
+## 2. Bản Vẽ Bố Cục Chi Tiết (ASCII Wireframe Layout)
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -47,7 +53,7 @@
 
 ---
 
-## 2. Bảng Mô Tả Mock Data Thực Tế
+## 3. Bảng Mô Tả Mock Data Thực Tế
 
 ### 2.1 Các Thẻ Số Liệu KPI Đầu Trang
 * **Tổng số pack pin:** `12,450` pack trên toàn quốc (Tăng 120 pack mới xuất xưởng từ VinES Hải Phòng trong tuần).
