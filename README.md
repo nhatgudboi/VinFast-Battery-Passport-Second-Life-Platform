@@ -602,6 +602,52 @@ Tài liệu thiết kế chi tiết cơ sở dữ liệu:
 - **Sơ đồ thực thể liên kết, phân nhóm & SQL Indexes:** [docs/DATABASE.md](docs/DATABASE.md)
 - **Mã nguồn lược đồ DBML 2.0 chuẩn hóa:** [src/database/schema.dbml](src/database/schema.dbml)
 
+### 4.2 Hợp Đồng Giao Tiếp OpenAPI 3.0.4 (REST API Specifications)
+
+Hợp đồng API xác lập quy chuẩn kết nối giữa giao diện Web/Mobile và tầng máy chủ ASP.NET Core Web API. Toàn bộ 24 endpoints được tổ chức chặt chẽ theo 11 nhóm năng lực nghiệp vụ, bảo mật bằng chuẩn JWT Bearer, phân quyền RBAC (`x-roles`) và phản hồi lỗi chuẩn hóa theo RFC 7807 Problem Details (`application/problem+json`).
+
+| Phân Hệ API (Tag) | Số Endpoint | Các Hoạt Động Cốt Lõi & Đường Dẫn Chính | Phân Quyền (RBAC) |
+| :--- | :---: | :--- | :--- |
+| **Authentication** | 4 | Đăng nhập (`/auth/login`), Đăng xuất, Lấy Profile (`/auth/me`), Đổi mật khẩu | Tất cả / Public |
+| **Dashboard** | 3 | KPIs vòng đời (`/dashboard/metrics`), Biểu đồ SoH, Top cảnh báo lệch áp cell | Admin HQ, Lead, KTV |
+| **Batteries** | 5 | Danh mục phân trang (`/batteries`), Khởi tạo hộ chiếu, Chi tiết, Lịch sử xe 1-N, In tem QR | Admin HQ, Lead, KTV |
+| **Vehicles** | 2 | Danh sách xe điện (`/vehicles`), Chi tiết xe & tra cứu quả pin đang gắn theo VIN | Admin HQ, Lead, KTV |
+| **Inspections** | 3 | Tra cứu nhật ký, Nhập số liệu đo đạc ($C_{\text{measured}}, V_{\text{max}}, V_{\text{min}}$) tự động tính SoH & $\Delta V$ | Lead, KTV |
+| **Swaps** | 3 | Khởi tạo lệnh đổi pin, Trưởng xưởng duyệt đổi pin (`/swaps/:id/approve`), Từ chối | Station Lead, KTV |
+| **SecondLife** | 3 | Danh sách trạm BESS, Kho pin $55-70\%$, Điều phối pin vào tủ rack container | Admin HQ, Station Lead |
+| **Recycling** | 1 | Bàn giao pin $< 55\%$ thu hồi Black Mass, khóa vĩnh viễn Hộ chiếu số | Admin HQ, Station Lead |
+| **Imports** | 2 | Xem trước kiểm tra lỗi file Excel (`/imports/preview`), Commit nguyên tử 5,000 pack | Admin HQ |
+| **Public Portal** | 2 | Quét QR tra cứu Hộ chiếu Pin di động (`/public/passport/:serial`), Tải PDF chứng nhận | Public (Không cần Login) |
+| **Governance** | 3 | Nhật ký kiểm toán bất biến (`/audit-logs`), Quản trị tài khoản nhân sự & xưởng | Admin HQ, Station Lead |
+
+#### Mẫu cURL Quét Mã QR Tra Cứu Hộ Chiếu Pin Công Khai (Mobile QR)
+```bash
+curl --request GET \
+  --url "http://localhost:5000/api/v1/public/passport/VF-BAT-VF8-2026-00892" \
+  --header "Accept: application/json"
+```
+
+#### Mẫu cURL Kỹ Thuật Viên Nhập Số Liệu Đo Dung Lượng & Phát Hiện Lỗi Cell
+```bash
+curl --request POST \
+  --url http://localhost:5000/api/v1/inspections \
+  --header "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "batteryId": 108,
+    "measuredCapacityKwh": 60.10,
+    "internalResistanceMohm": 24.50,
+    "cycleCountReading": 480,
+    "vMaxVolts": 4.185,
+    "vMinVolts": 4.120,
+    "operatingTemperatureC": 28.5
+  }'
+```
+
+Tài liệu chi tiết kỹ thuật API:
+- **Tệp hợp đồng nguồn đầy đủ (57KB):** [docs/api/openapi.yaml](docs/api/openapi.yaml)
+- **Hướng dẫn tích hợp & Lệnh cURL mẫu:** [docs/api/README.md](docs/api/README.md)
+
 ---
 
 ## 5. Sơ Đồ Tuần Tự Cốt Lõi (Sequence Diagrams)

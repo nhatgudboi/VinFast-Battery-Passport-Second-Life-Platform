@@ -1,52 +1,486 @@
 openapi: 3.0.4
 info:
-  title: VSF - VinFast Battery Passport & Second-Life API
-  description: API dac ta cho He thong Ho chieu So va Quan tri Vong doi Pin Xe Dien VinFast
+  title: VSF — VinFast Battery Passport & Second-Life Platform API
+  description: |
+    Enterprise REST API contract for the VinFast Digital Battery Passport and Second-Life Platform.
+    Fully compliant with the European Union Battery Regulation (EU 2023/1542), VinFast 1-N vehicle-battery
+    lifecycle tracking, field workshop diagnostic evaluation, and V-Green BESS second-life container dispatch.
   version: 1.0.0
+  contact:
+    name: VinFast Digital Battery Passport Engineering Team
+    email: passport-support@vinfast.vn
+    url: https://vinfastauto.com
+
 servers:
   - url: http://localhost:5000/api/v1
     description: Local Development Server
+  - url: https://api.passport.vinfast.vn/api/v1
+    description: Production Cloud Gateway
+
+tags:
+  - name: Authentication
+    description: User authentication, JWT issuance, password management, and active session profile.
+  - name: Dashboard
+    description: High-level KPI aggregations, SoH fleet distributions, and critical cell voltage alerts.
+  - name: Batteries
+    description: Physical battery pack registry, EU passport lifecycle, and industrial thermal QR labels.
+  - name: Vehicles
+    description: VinFast commercial electric vehicles and 1-N vehicle-battery rebinding timeline.
+  - name: Inspections
+    description: Field workshop diagnostic measurements, automated SoH evaluation, and cell fault detection.
+  - name: Swaps
+    description: Warranty battery swap approval workflow for degraded packs (SoH < 70% or Cell Delta V > 0.05V).
+  - name: SecondLife
+    description: Second-life battery allocation into V-Green BESS stationary container storage hubs (55-70% SoH).
+  - name: Recycling
+    description: End-of-life battery decommissioning, Black Mass metallurgical recovery handover, and passport lock.
+  - name: Imports
+    description: Atomic batch import of factory-shipped packs from VinES manufacturing plants via Excel.
+  - name: Public
+    description: Public unauthenticated endpoints for mobile QR code scanning and official EU PDF certificate download.
+  - name: Governance
+    description: Immutable audit logs (SEC-AUDIT-001) and staff user administration with workshop allocation.
+
 paths:
+  # ==================================================================
+  # 1. AUTHENTICATION & PROFILE
+  # ==================================================================
   /auth/login:
     post:
-      summary: Dang nhap he thong
+      tags: [Authentication]
+      summary: Authenticate user credentials
+      description: Verifies email/password or VinFast SSO token and returns JWT Bearer access token.
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [email, password]
-              properties:
-                email: { type: string, example: "lead.hanoi@vinfast.vn" }
-                password: { type: string, example: "ChangeMe123!" }
+              $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Dang nhap thanh cong, tra ve JWT Bearer Token
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
         '401':
-          description: Thong tin dang nhap khong hop le
+          $ref: '#/components/responses/401Unauthorized'
 
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Discard active session
+      description: Client-side token discard acknowledgement. Server logs logout in audit trail.
+      responses:
+        '204':
+          description: Session terminated successfully
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get active user profile
+      description: Returns profile, role permissions, and assigned workshop for the authenticated user.
+      responses:
+        '200':
+          description: User profile details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  /auth/change-password:
+    put:
+      tags: [Authentication]
+      summary: Change user password
+      description: Updates account password after verifying current password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password updated successfully
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  # ==================================================================
+  # 2. DASHBOARD & FLEET ANALYTICS
+  # ==================================================================
   /dashboard/metrics:
     get:
-      summary: Lay cac chi so KPI tong the vong doi pin
-      security:
-        - BearerAuth: []
+      tags: [Dashboard]
+      summary: Retrieve lifecycle KPI metrics
+      description: Aggregated KPI statistics for total packs, first-life fleet, second-life BESS, and recall queue.
+      x-roles: [ADMIN_HQ, STATION_LEAD, TECHNICIAN]
+      parameters:
+        - name: workshopId
+          in: query
+          schema: { type: integer, format: int64 }
+          description: Optional workshop filter (Admin HQ only)
       responses:
         '200':
-          description: Thanh cong
+          description: KPI metrics summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardMetricsResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
 
+  /dashboard/soh-distribution:
+    get:
+      tags: [Dashboard]
+      summary: Retrieve SoH distribution tiers
+      description: Fleet distribution across 4 health tiers (>=80%, 70-80%, 55-70%, <55%).
+      x-roles: [ADMIN_HQ, STATION_LEAD, TECHNICIAN]
+      responses:
+        '200':
+          description: SoH distribution breakdown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SohDistributionResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  /dashboard/cell-alerts:
+    get:
+      tags: [Dashboard]
+      summary: Retrieve critical cell voltage alerts
+      description: Top batteries with cell voltage imbalance Delta V > 0.05V requiring immediate intervention.
+      x-roles: [ADMIN_HQ, STATION_LEAD, TECHNICIAN]
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10, maximum: 50 }
+      responses:
+        '200':
+          description: Critical alerts list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CriticalCellAlertItem'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+  # ==================================================================
+  # 3. BATTERY REGISTRY & PASSPORT LIFECYCLE
+  # ==================================================================
   /batteries:
     get:
-      summary: Lay danh sach pack pin phan trang kem bo loc
-      security:
-        - BearerAuth: []
+      tags: [Batteries]
+      summary: List battery registry with filters
+      description: Paginated battery pack registry with comprehensive multi-criteria filtering.
+      x-roles: [ADMIN_HQ, STATION_LEAD, TECHNICIAN]
       parameters:
-        - name: modelCode
+        - name: page
+          in: query
+          schema: { type: integer, default: 1, minimum: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: search
           in: query
           schema: { type: string }
+          description: Serial number or VIN query
+        - name: modelName
+          in: query
+          schema: { $ref: '#/components/schemas/VehicleModelEnum' }
+        - name: lifecycleStatus
+          in: query
+          schema: { $ref: '#/components/schemas/LifecycleStatusEnum' }
+        - name: minSoh
+          in: query
+          schema: { type: number, format: float }
+        - name: maxSoh
+          in: query
+          schema: { type: number, format: float }
+        - name: workshopId
+          in: query
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Paginated batteries list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBatteriesResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+
+    post:
+      tags: [Batteries]
+      summary: Register battery pack & initialize passport
+      description: Manually registers a new battery pack and creates its EU Digital Battery Passport.
+      x-roles: [ADMIN_HQ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBatteryRequest'
+      responses:
+        '201':
+          description: Battery pack created and passport issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatteryDetailResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '409':
+          $ref: '#/components/responses/409Conflict'
+
+  /batteries/{id}:
+    get:
+      tags: [Batteries]
+      summary: Get complete battery details
+      description: Detailed battery profile, electrochemical specifications, and EU passport compliance metrics.
+      x-roles: [ADMIN_HQ, STATION_LEAD, TECHNICIAN]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Battery details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatteryDetailResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+    delete:
+      tags: [Batteries]
+      summary: Soft-delete battery pack
+      description: Marks battery pack as deleted (sets deleted_at) and retains immutable audit log.
+      x-roles: [ADMIN_HQ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '204':
+          description: Battery soft-deleted
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /batteries/{id}/vehicle-history:
+    get:
+      tags: [Batteries]
+      summary: Get 1-N vehicle binding history timeline
+      description: Chronological timeline of all VinFast vehicles that have mounted this battery pack.
+      x-roles: [ADMIN_HQ, STATION_LEAD, TECHNICIAN]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Vehicle history timeline
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VehicleBatteryHistoryItem'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /batteries/{id}/qr-label:
+    get:
+      tags: [Batteries]
+      summary: Generate industrial QR label preview
+      description: Returns QR payload, data matrix SVG vector, and thermal print dimensions (100x75mm).
+      x-roles: [STATION_LEAD, TECHNICIAN]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: QR label payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QrLabelResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  # ==================================================================
+  # 4. VEHICLES & 1-N TIMELINE
+  # ==================================================================
+  /vehicles:
+    get:
+      tags: [Vehicles]
+      summary: List VinFast electric vehicles
+      description: Paginated EV list with mounted battery status.
+      x-roles: [ADMIN_HQ, STATION_LEAD, TECHNICIAN]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: search
+          in: query
+          schema: { type: string }
+          description: VIN or license plate search
+      responses:
+        '200':
+          description: Vehicles list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedVehiclesResponse'
+
+  /vehicles/{vin}:
+    get:
+      tags: [Vehicles]
+      summary: Get vehicle profile and mounted battery
+      description: Retrieves vehicle details, current mounted pack, and battery replacement history.
+      x-roles: [ADMIN_HQ, STATION_LEAD, TECHNICIAN]
+      parameters:
+        - name: vin
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Vehicle profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleDetailResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  # ==================================================================
+  # 5. DIAGNOSTICS, SOH & CELL HEALTH INSPECTIONS
+  # ==================================================================
+  /inspections:
+    get:
+      tags: [Inspections]
+      summary: List field diagnostic inspection logs
+      description: Paginated inspection history with filter by cell fault, conclusion, and workshop.
+      x-roles: [ADMIN_HQ, STATION_LEAD, TECHNICIAN]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: batteryId
+          in: query
+          schema: { type: integer, format: int64 }
+        - name: hasCellFault
+          in: query
+          schema: { type: boolean }
+        - name: conclusion
+          in: query
+          schema: { $ref: '#/components/schemas/InspectionConclusionEnum' }
+      responses:
+        '200':
+          description: Inspections list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInspectionsResponse'
+
+    post:
+      tags: [Inspections]
+      summary: Submit workshop diagnostic measurement
+      description: |
+        Submits physical measurement data from diagnostic tool. Automatically evaluates SoH = (C_measured / C_nominal) * 100
+        and checks cell imbalance Delta V = V_max - V_min. Flags cell fault when Delta V > 0.05V.
+      x-roles: [STATION_LEAD, TECHNICIAN]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInspectionRequest'
+      responses:
+        '201':
+          description: Inspection recorded, SoH and lifecycle status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionDetailResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /inspections/{id}:
+    get:
+      tags: [Inspections]
+      summary: Get inspection record details
+      x-roles: [ADMIN_HQ, STATION_LEAD, TECHNICIAN]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Inspection details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectionDetailResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  # ==================================================================
+  # 6. BATTERY SWAP WORKFLOW
+  # ==================================================================
+  /swaps:
+    get:
+      tags: [Swaps]
+      summary: List battery replacement orders
+      description: Paginated orders pending Station Lead sign-off or completed.
+      x-roles: [ADMIN_HQ, STATION_LEAD]
+      parameters:
         - name: status
           in: query
-          schema: { type: string }
+          schema: { $ref: '#/components/schemas/SwapOrderStatusEnum' }
         - name: page
           in: query
           schema: { type: integer, default: 1 }
@@ -55,58 +489,988 @@ paths:
           schema: { type: integer, default: 20 }
       responses:
         '200':
-          description: Danh sach pin
+          description: Swap orders list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSwapOrdersResponse'
 
-  /batteries/{serial}:
-    get:
-      summary: Xem chi tiet ho so mot qua pin
-      security:
-        - BearerAuth: []
+    post:
+      tags: [Swaps]
+      summary: Create battery swap order
+      description: Initiates replacement workflow for degraded pack (SoH < 70% or cell fault).
+      x-roles: [STATION_LEAD, TECHNICIAN]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSwapOrderRequest'
+      responses:
+        '201':
+          description: Swap order created pending approval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapOrderDetailResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+
+  /swaps/{id}/approve:
+    post:
+      tags: [Swaps]
+      summary: Station Lead approves battery swap
+      description: |
+        Executes atomic database transaction:
+        1. Sets removed_at on old battery history.
+        2. Sets current_battery_id on vehicle to new pack.
+        3. Inserts new vehicle_battery_history record.
+        4. Retires old pack to warehouse or BESS pool.
+      x-roles: [STATION_LEAD]
       parameters:
-        - name: serial
+        - name: id
           in: path
           required: true
-          schema: { type: string }
+          schema: { type: integer, format: int64 }
       responses:
         '200':
-          description: Thong tin chi tiet pin
+          description: Swap approved and vehicle-battery rebinding executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapOrderDetailResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
 
-  /inspections:
+  /swaps/{id}/reject:
     post:
-      summary: Nhap so lieu do dac kiem dinh va tinh toan SoH
-      security:
-        - BearerAuth: []
+      tags: [Swaps]
+      summary: Station Lead rejects swap order
+      x-roles: [STATION_LEAD]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [packSerialNumber, measuredCapacityKwh, odometerKm, cycleCount]
+              required: [reason]
               properties:
-                packSerialNumber: { type: string }
-                measuredCapacityKwh: { type: number }
-                internalResistanceMohm: { type: number }
-                odometerKm: { type: integer }
-                cycleCount: { type: integer }
+                reason: { type: string, example: "Diagnostics indicate external connector issue, not internal cell failure." }
+      responses:
+        '200':
+          description: Swap order rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapOrderDetailResponse'
+
+  # ==================================================================
+  # 7. SECOND-LIFE BESS & RECYCLING DISPOSAL
+  # ==================================================================
+  /second-life/stations:
+    get:
+      tags: [SecondLife]
+      summary: List V-Green BESS charging station clusters
+      description: Stationary storage hubs, target vs installed storage capacity, and active rack count.
+      x-roles: [ADMIN_HQ, STATION_LEAD]
+      responses:
+        '200':
+          description: BESS stations list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BessStationItem'
+
+  /second-life/available-batteries:
+    get:
+      tags: [SecondLife]
+      summary: List retired packs eligible for BESS (55% <= SoH < 70%)
+      x-roles: [ADMIN_HQ, STATION_LEAD]
+      responses:
+        '200':
+          description: Eligible second-life packs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BatterySummaryItem'
+
+  /second-life/allocate:
+    post:
+      tags: [SecondLife]
+      summary: Allocate battery pack into BESS container rack slot
+      x-roles: [ADMIN_HQ, STATION_LEAD]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocateBessRequest'
       responses:
         '201':
-          description: Kiem dinh thanh cong, da cap nhat SoH va phan luong trang thai
+          description: Battery allocated to BESS container
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BessAllocationResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
 
-  /public/passport/{serial}:
+  /recycling/handover:
+    post:
+      tags: [Recycling]
+      summary: Decommission battery and handover to Black Mass recycler
+      description: |
+        Authorized for packs with SoH < 55% or structural cell damage.
+        Transfers custody to metallurgy recovery partner and locks passport permanently.
+      x-roles: [ADMIN_HQ, STATION_LEAD]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecyclingHandoverRequest'
+      responses:
+        '201':
+          description: Battery marked as RECYCLED and passport closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecyclingResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+
+  # ==================================================================
+  # 8. BATCH EXCEL IMPORT
+  # ==================================================================
+  /imports/preview:
+    post:
+      tags: [Imports]
+      summary: Upload and validate VinES factory Excel file
+      description: Performs in-memory schema and duplicate validation. Returns row-by-row check without persisting.
+      x-roles: [ADMIN_HQ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excel file (.xlsx) with maximum size of 10 MB and up to 5,000 rows.
+      responses:
+        '200':
+          description: Validation preview results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportPreviewResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+
+  /imports/commit:
+    post:
+      tags: [Imports]
+      summary: Commit validated batch import atomically
+      description: Executes all-or-nothing database transaction inserting batteries and passport entities.
+      x-roles: [ADMIN_HQ]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, batchCode]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                batchCode:
+                  type: string
+                  example: "BATCH-202610-VINES-01"
+      responses:
+        '201':
+          description: Batch imported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportCommitResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+
+  # ==================================================================
+  # 9. PUBLIC QR CODE PORTAL (NO AUTH REQUIRED)
+  # ==================================================================
+  /public/passport/{serialNumber}:
     get:
-      summary: Cong tra cuu Ho chieu Pin cong khai cho nguoi quet ma QR
+      tags: [Public]
+      summary: Public mobile QR code passport query
+      description: |
+        Returns public-facing EU Battery Passport data.
+        Includes SoH health gauge, carbon footprint, recycled metal content, and GDPR-anonymized service history.
+      security: []
       parameters:
-        - name: serial
+        - name: serialNumber
+          in: path
+          required: true
+          schema: { type: string }
+          example: "VF-BAT-VF8-2026-00892"
+      responses:
+        '200':
+          description: Public battery passport profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicPassportResponse'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /public/passport/{serialNumber}/certificate.pdf:
+    get:
+      tags: [Public]
+      summary: Download official EU Battery Passport Certificate (PDF)
+      description: Streams official printable PDF with cryptographic signature verification.
+      security: []
+      parameters:
+        - name: serialNumber
           in: path
           required: true
           schema: { type: string }
       responses:
         '200':
-          description: Thong tin ho chieu pin cong khai
+          description: PDF certificate binary stream
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  # ==================================================================
+  # 10. GOVERNANCE & AUDIT TRAIL
+  # ==================================================================
+  /audit-logs:
+    get:
+      tags: [Governance]
+      summary: Query immutable audit logs
+      description: Paginated audit trail with actor, action type, IP address, and redacted before/after JSON diff.
+      x-roles: [ADMIN_HQ, STATION_LEAD]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20 }
+        - name: action
+          in: query
+          schema: { $ref: '#/components/schemas/AuditActionEnum' }
+        - name: tableName
+          in: query
+          schema: { type: string }
+        - name: recordId
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Audit logs list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogsResponse'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /users:
+    get:
+      tags: [Governance]
+      summary: List staff user accounts
+      x-roles: [ADMIN_HQ]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: Users list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsersResponse'
+
+    post:
+      tags: [Governance]
+      summary: Create staff user account
+      x-roles: [ADMIN_HQ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailResponse'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+
+  /users/{id}/status:
+    put:
+      tags: [Governance]
+      summary: Activate or lock user account
+      x-roles: [ADMIN_HQ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [isActive]
+              properties:
+                isActive: { type: boolean }
+      responses:
+        '200':
+          description: User status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailResponse'
+
+# ==================================================================
+# COMPONENTS & SCHEMAS
+# ==================================================================
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: Standard 30-minute JWT token sent as Authorization Bearer <token>.
+
+  responses:
+    400BadRequest:
+      description: Validation failed or malformed request payload
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    401Unauthorized:
+      description: Invalid, missing, or expired JWT access token
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    403Forbidden:
+      description: Current user role lacks sufficient permission (RBAC)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    404NotFound:
+      description: Requested entity does not exist or was soft-deleted
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    409Conflict:
+      description: Unique constraint violation (e.g. duplicate serial number or VIN)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+  schemas:
+    # ----------------------------------------------------------------
+    # ENUMS
+    # ----------------------------------------------------------------
+    UserRoleEnum:
+      type: string
+      enum: [ADMIN_HQ, STATION_LEAD, TECHNICIAN, AUDITOR_PUBLIC]
+
+    VehicleModelEnum:
+      type: string
+      enum: [VF3, VF5, VF6, VF7, VF8, VF9, VFe34]
+
+    CellChemistryEnum:
+      type: string
+      enum: [LFP, NMC]
+
+    LifecycleStatusEnum:
+      type: string
+      enum: [NEW_MANUFACTURED, FIRST_LIFE_VEHICLE, RECALL_PENDING, RETIRED_FROM_VEHICLE, SECOND_LIFE_BESS, RECYCLED]
+
+    PassportStatusEnum:
+      type: string
+      enum: [ACTIVE, SUSPENDED, EXPIRED_RECYCLED]
+
+    InspectionConclusionEnum:
+      type: string
+      enum: [PASS_FIRST_LIFE, FAIL_DEGRADED_SOH, FAIL_CELL_VOLTAGE_FAULT, SCHEDULE_SWAP]
+
+    SwapOrderStatusEnum:
+      type: string
+      enum: [PENDING_LEAD_APPROVAL, APPROVED, REJECTED, COMPLETED]
+
+    AuditActionEnum:
+      type: string
+      enum: [CREATE, UPDATE, SOFT_DELETE, SWAP_BATTERY, ALLOCATE_BESS, RECYCLE_DISPOSAL, EXPORT_PDF, IMPORT_EXCEL, LOGIN]
+
+    # ----------------------------------------------------------------
+    # ERROR PROBLEM DETAILS (RFC 7807)
+    # ----------------------------------------------------------------
+    ProblemDetails:
+      type: object
+      required: [type, title, status, errorCode, detail, traceId]
+      properties:
+        type:
+          type: string
+          example: "https://errors.vinfast.vn/VALIDATION_FAILED"
+        title:
+          type: string
+          example: "Validation Failed"
+        status:
+          type: integer
+          example: 400
+        errorCode:
+          type: string
+          example: "VALIDATION_FAILED"
+        detail:
+          type: string
+          example: "Measured cell voltage delta 0.065V exceeds allowable threshold of 0.050V."
+        traceId:
+          type: string
+          example: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    # ----------------------------------------------------------------
+    # PAGINATION METADATA
+    # ----------------------------------------------------------------
+    PaginationMeta:
+      type: object
+      required: [page, pageSize, totalItems, totalPages]
+      properties:
+        page: { type: integer, example: 1 }
+        pageSize: { type: integer, example: 20 }
+        totalItems: { type: integer, example: 142 }
+        totalPages: { type: integer, example: 8 }
+
+    # ----------------------------------------------------------------
+    # AUTH DTOs
+    # ----------------------------------------------------------------
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, example: "lead.longbien@vinfast.vn" }
+        password: { type: string, example: "VinFast2026!" }
+
+    LoginResponse:
+      type: object
+      required: [accessToken, tokenType, expiresInSeconds, user]
+      properties:
+        accessToken: { type: string }
+        tokenType: { type: string, example: "Bearer" }
+        expiresInSeconds: { type: integer, example: 1800 }
+        user: { $ref: '#/components/schemas/UserProfileResponse' }
+
+    UserProfileResponse:
+      type: object
+      required: [id, email, fullName, staffCode, role, isActive]
+      properties:
+        id: { type: integer, format: int64, example: 1 }
+        email: { type: string, example: "lead.longbien@vinfast.vn" }
+        fullName: { type: string, example: "Nguyen Van Long" }
+        staffCode: { type: string, example: "VF-LEAD-042" }
+        role: { $ref: '#/components/schemas/UserRoleEnum' }
+        workshopId: { type: integer, format: int64, nullable: true, example: 3 }
+        workshopName: { type: string, nullable: true, example: "VinFast Center Long Bien" }
+        isActive: { type: boolean, example: true }
+
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: { type: string }
+        newPassword: { type: string, minLength: 8 }
+
+    # ----------------------------------------------------------------
+    # DASHBOARD DTOs
+    # ----------------------------------------------------------------
+    DashboardMetricsResponse:
+      type: object
+      required: [totalPacksManaged, firstLifeVehicleCount, secondLifeBessCount, recallPendingCount, averageFleetSoh]
+      properties:
+        totalPacksManaged: { type: integer, example: 12500 }
+        firstLifeVehicleCount: { type: integer, example: 10450 }
+        secondLifeBessCount: { type: integer, example: 1720 }
+        recallPendingCount: { type: integer, example: 330 }
+        averageFleetSoh: { type: number, format: float, example: 91.45 }
+
+    SohDistributionResponse:
+      type: object
+      required: [healthyCount, warningCount, secondLifeCount, criticalCount]
+      properties:
+        healthyCount: { type: integer, example: 9100, description: "SoH >= 80%" }
+        warningCount: { type: integer, example: 1350, description: "70% <= SoH < 80%" }
+        secondLifeCount: { type: integer, example: 1720, description: "55% <= SoH < 70%" }
+        criticalCount: { type: integer, example: 330, description: "SoH < 55% or cell fault" }
+
+    CriticalCellAlertItem:
+      type: object
+      required: [batteryId, serialNumber, vin, currentSoh, deltaVolts, workshopName]
+      properties:
+        batteryId: { type: integer, format: int64 }
+        serialNumber: { type: string, example: "VF-BAT-VF8-2026-00892" }
+        vin: { type: string, example: "VF8A31XG9P0018241" }
+        currentSoh: { type: number, format: float, example: 68.20 }
+        deltaVolts: { type: number, format: float, example: 0.068 }
+        workshopName: { type: string, example: "VinFast Center Landmark 81" }
+
+    # ----------------------------------------------------------------
+    # BATTERY DTOs
+    # ----------------------------------------------------------------
+    BatterySummaryItem:
+      type: object
+      required: [id, serialNumber, modelName, cellChemistry, nominalCapacityKwh, currentSoh, totalCycles, lifecycleStatus]
+      properties:
+        id: { type: integer, format: int64 }
+        serialNumber: { type: string, example: "VF-BAT-VF8-2026-00892" }
+        modelName: { $ref: '#/components/schemas/VehicleModelEnum' }
+        cellChemistry: { $ref: '#/components/schemas/CellChemistryEnum' }
+        nominalCapacityKwh: { type: number, format: float, example: 87.70 }
+        currentSoh: { type: number, format: float, example: 94.20 }
+        totalCycles: { type: integer, example: 215 }
+        lifecycleStatus: { $ref: '#/components/schemas/LifecycleStatusEnum' }
+        currentVin: { type: string, nullable: true, example: "VF8A31XG9P0018241" }
+        workshopName: { type: string, nullable: true, example: "VinFast Center Long Bien" }
+
+    PaginatedBatteriesResponse:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatterySummaryItem'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    CreateBatteryRequest:
+      type: object
+      required: [serialNumber, modelName, cellChemistry, nominalCapacityKwh, nominalVoltageV, packWeightKg, manufacturer, manufactureDate, carbonFootprintTotal, carbonPerformanceClass, recycledCobaltPercent, recycledLithiumPercent, recycledNickelPercent]
+      properties:
+        serialNumber: { type: string, example: "VF-BAT-VF8-2026-00999" }
+        modelName: { $ref: '#/components/schemas/VehicleModelEnum' }
+        cellChemistry: { $ref: '#/components/schemas/CellChemistryEnum' }
+        nominalCapacityKwh: { type: number, format: float, example: 87.70 }
+        nominalVoltageV: { type: number, format: float, example: 400.00 }
+        packWeightKg: { type: number, format: float, example: 550.00 }
+        manufacturer: { type: string, example: "VinES Hai Phong" }
+        manufactureDate: { type: string, format: date, example: "2026-09-15" }
+        carbonFootprintTotal: { type: number, format: float, example: 72.50 }
+        carbonPerformanceClass: { type: string, example: "A" }
+        recycledCobaltPercent: { type: number, format: float, example: 16.00 }
+        recycledLithiumPercent: { type: number, format: float, example: 6.00 }
+        recycledNickelPercent: { type: number, format: float, example: 18.00 }
+
+    BatteryDetailResponse:
+      type: object
+      required: [id, serialNumber, modelName, cellChemistry, nominalCapacityKwh, nominalVoltageV, packWeightKg, manufacturer, manufactureDate, lifecycleStatus, currentSoh, totalCycles, passport]
+      properties:
+        id: { type: integer, format: int64 }
+        serialNumber: { type: string, example: "VF-BAT-VF8-2026-00892" }
+        modelName: { $ref: '#/components/schemas/VehicleModelEnum' }
+        cellChemistry: { $ref: '#/components/schemas/CellChemistryEnum' }
+        nominalCapacityKwh: { type: number, format: float, example: 87.70 }
+        nominalVoltageV: { type: number, format: float, example: 400.00 }
+        packWeightKg: { type: number, format: float, example: 550.00 }
+        manufacturer: { type: string, example: "VinES Hai Phong" }
+        manufactureDate: { type: string, format: date, example: "2026-01-20" }
+        lifecycleStatus: { $ref: '#/components/schemas/LifecycleStatusEnum' }
+        currentSoh: { type: number, format: float, example: 92.40 }
+        totalCycles: { type: integer, example: 280 }
+        currentVehicleVin: { type: string, nullable: true, example: "VF8A31XG9P0018241" }
+        passport:
+          type: object
+          required: [passportId, qrPayloadUrl, euDeclaration, carbonFootprintKgCo2ePerKwh, carbonClass, recycledCobalt, recycledLithium, recycledNickel, status]
+          properties:
+            passportId: { type: string, example: "urn:vinfast:battery:vf8-2026-00892" }
+            qrPayloadUrl: { type: string, example: "https://passport.vinfast.vn/passport/VF-BAT-VF8-2026-00892" }
+            euDeclaration: { type: string, example: "EU-BAT-2023-1542-VF-0892" }
+            carbonFootprintKgCo2ePerKwh: { type: number, format: float, example: 72.50 }
+            carbonClass: { type: string, example: "A" }
+            recycledCobalt: { type: number, format: float, example: 16.00 }
+            recycledLithium: { type: number, format: float, example: 6.00 }
+            recycledNickel: { type: number, format: float, example: 18.00 }
+            un383Certified: { type: boolean, example: true }
+            status: { $ref: '#/components/schemas/PassportStatusEnum' }
+
+    VehicleBatteryHistoryItem:
+      type: object
+      required: [id, vehicleVin, vehiclePlate, actionType, odometerAtAction, batterySohAtAction, installedAt, technicianName, workshopName]
+      properties:
+        id: { type: integer, format: int64 }
+        vehicleVin: { type: string, example: "VF8A31XG9P0018241" }
+        vehiclePlate: { type: string, example: "30K-888.88" }
+        actionType: { type: string, example: "INITIAL_INSTALL" }
+        odometerAtAction: { type: integer, example: 0 }
+        batterySohAtAction: { type: number, format: float, example: 100.00 }
+        installedAt: { type: string, format: date-time }
+        removedAt: { type: string, format: date-time, nullable: true }
+        technicianName: { type: string, example: "Tran Hoang An" }
+        workshopName: { type: string, example: "VinFast Center Long Bien" }
+        swapReason: { type: string, nullable: true }
+
+    QrLabelResponse:
+      type: object
+      required: [serialNumber, passportUrl, qrSvgData, labelWidthMm, labelHeightMm]
+      properties:
+        serialNumber: { type: string, example: "VF-BAT-VF8-2026-00892" }
+        passportUrl: { type: string, example: "https://passport.vinfast.vn/passport/VF-BAT-VF8-2026-00892" }
+        qrSvgData: { type: string, description: "Raw SVG vector XML string for industrial barcode printer" }
+        labelWidthMm: { type: integer, example: 100 }
+        labelHeightMm: { type: integer, example: 75 }
+
+    # ----------------------------------------------------------------
+    # VEHICLE DTOs
+    # ----------------------------------------------------------------
+    PaginatedVehiclesResponse:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer, format: int64 }
+              vin: { type: string, example: "VF8A31XG9P0018241" }
+              licensePlate: { type: string, example: "30K-888.88" }
+              modelName: { $ref: '#/components/schemas/VehicleModelEnum' }
+              customerName: { type: string, example: "Pham Nhat Vu" }
+              currentBatterySerial: { type: string, nullable: true, example: "VF-BAT-VF8-2026-00892" }
+              currentBatterySoh: { type: number, format: float, nullable: true, example: 92.40 }
+              totalOdometerKm: { type: integer, example: 28400 }
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    VehicleDetailResponse:
+      type: object
+      required: [id, vin, licensePlate, modelName, customerName, totalOdometerKm, registeredAt]
+      properties:
+        id: { type: integer, format: int64 }
+        vin: { type: string, example: "VF8A31XG9P0018241" }
+        licensePlate: { type: string, example: "30K-888.88" }
+        modelName: { $ref: '#/components/schemas/VehicleModelEnum' }
+        customerName: { type: string, example: "Pham Nhat Vu" }
+        customerPhone: { type: string, example: "+84912345678" }
+        totalOdometerKm: { type: integer, example: 28400 }
+        registeredAt: { type: string, format: date, example: "2026-02-15" }
+        currentBattery: { $ref: '#/components/schemas/BatterySummaryItem' }
+
+    # ----------------------------------------------------------------
+    # INSPECTION DTOs
+    # ----------------------------------------------------------------
+    CreateInspectionRequest:
+      type: object
+      required: [batteryId, measuredCapacityKwh, internalResistanceMohm, cycleCountReading, vMaxVolts, vMinVolts, operatingTemperatureC]
+      properties:
+        batteryId: { type: integer, format: int64, example: 108 }
+        vehicleId: { type: integer, format: int64, nullable: true, example: 45 }
+        measuredCapacityKwh: { type: number, format: float, example: 60.10 }
+        internalResistanceMohm: { type: number, format: float, example: 24.50 }
+        cycleCountReading: { type: integer, example: 480 }
+        vMaxVolts: { type: number, format: float, example: 4.185 }
+        vMinVolts: { type: number, format: float, example: 4.120 }
+        operatingTemperatureC: { type: number, format: float, example: 28.5 }
+        diagnosticNotes: { type: string, example: "Periodic 40,000 km maintenance check." }
+
+    InspectionDetailResponse:
+      type: object
+      required: [id, batteryId, measuredCapacityKwh, calculatedSoh, internalResistanceMohm, vMaxVolts, vMinVolts, vDeltaVolts, hasCellFault, conclusion, inspectionDate, technicianName, workshopName]
+      properties:
+        id: { type: integer, format: int64 }
+        batteryId: { type: integer, format: int64 }
+        batterySerialNumber: { type: string, example: "VF-BAT-VF8-2026-00892" }
+        measuredCapacityKwh: { type: number, format: float, example: 60.10 }
+        calculatedSoh: { type: number, format: float, example: 68.53 }
+        internalResistanceMohm: { type: number, format: float, example: 24.50 }
+        vMaxVolts: { type: number, format: float, example: 4.185 }
+        vMinVolts: { type: number, format: float, example: 4.120 }
+        vDeltaVolts: { type: number, format: float, example: 0.065 }
+        hasCellFault: { type: boolean, example: true }
+        conclusion: { $ref: '#/components/schemas/InspectionConclusionEnum' }
+        inspectionDate: { type: string, format: date-time }
+        technicianName: { type: string, example: "Tran Hoang An" }
+        workshopName: { type: string, example: "VinFast Center Long Bien" }
+        requiresBatterySwap: { type: boolean, example: true }
+
+    PaginatedInspectionsResponse:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectionDetailResponse'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # ----------------------------------------------------------------
+    # SWAP ORDER DTOs
+    # ----------------------------------------------------------------
+    CreateSwapOrderRequest:
+      type: object
+      required: [inspectionId, newBatteryId]
+      properties:
+        inspectionId: { type: integer, format: int64, example: 512 }
+        newBatteryId: { type: integer, format: int64, example: 1042 }
+        notes: { type: string, example: "SoH 68.53% is below 70% threshold. Immediate replacement." }
+
+    SwapOrderDetailResponse:
+      type: object
+      required: [id, vehicleVin, oldBatterySerial, oldBatterySoh, newBatterySerial, status, stationLeadName, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        vehicleVin: { type: string, example: "VF8A31XG9P0018241" }
+        oldBatterySerial: { type: string, example: "VF-BAT-VF8-2026-00892" }
+        oldBatterySoh: { type: number, format: float, example: 68.53 }
+        newBatterySerial: { type: string, example: "VF-BAT-VF8-2026-01042" }
+        status: { $ref: '#/components/schemas/SwapOrderStatusEnum' }
+        stationLeadName: { type: string, example: "Nguyen Van Long" }
+        rejectionReason: { type: string, nullable: true }
+        approvedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    PaginatedSwapOrdersResponse:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SwapOrderDetailResponse'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # ----------------------------------------------------------------
+    # SECOND-LIFE & RECYCLING DTOs
+    # ----------------------------------------------------------------
+    BessStationItem:
+      type: object
+      required: [id, stationCode, name, capacityTargetKwh, currentInstalledKwh, maxPackSlots, activePackCount, isOnline]
+      properties:
+        id: { type: integer, format: int64 }
+        stationCode: { type: string, example: "VGREEN-BESS-HN01" }
+        name: { type: string, example: "Phap Van Highway Fast Charging BESS Hub" }
+        capacityTargetKwh: { type: number, format: float, example: 2100.00 }
+        currentInstalledKwh: { type: number, format: float, example: 1450.00 }
+        maxPackSlots: { type: integer, example: 24 }
+        activePackCount: { type: integer, example: 18 }
+        isOnline: { type: boolean, example: true }
+
+    AllocateBessRequest:
+      type: object
+      required: [bessStationId, batteryId, slotNumber]
+      properties:
+        bessStationId: { type: integer, format: int64, example: 2 }
+        batteryId: { type: integer, format: int64, example: 108 }
+        slotNumber: { type: integer, example: 19 }
+
+    BessAllocationResponse:
+      type: object
+      required: [id, bessStationCode, batterySerial, slotNumber, allocatedSoh, allocatedAt]
+      properties:
+        id: { type: integer, format: int64 }
+        bessStationCode: { type: string, example: "VGREEN-BESS-HN01" }
+        batterySerial: { type: string, example: "VF-BAT-VF8-2026-00892" }
+        slotNumber: { type: integer, example: 19 }
+        allocatedSoh: { type: number, format: float, example: 68.53 }
+        allocatedAt: { type: string, format: date-time }
+
+    RecyclingHandoverRequest:
+      type: object
+      required: [batteryId, partnerName, handoverDate, handoverManifestCode]
+      properties:
+        batteryId: { type: integer, format: int64, example: 88 }
+        partnerName: { type: string, example: "GreenMetals Metallurgy Europe GmbH" }
+        handoverDate: { type: string, format: date, example: "2026-10-15" }
+        handoverManifestCode: { type: string, example: "MANIFEST-BM-2026-088" }
+        certificateDocUrl: { type: string, example: "https://docs.vinfast.vn/recycling/manifest-bm-088.pdf" }
+
+    RecyclingResponse:
+      type: object
+      required: [id, batterySerial, partnerName, handoverManifestCode, passportLocked]
+      properties:
+        id: { type: integer, format: int64 }
+        batterySerial: { type: string, example: "VF-BAT-VF8-2026-00088" }
+        partnerName: { type: string, example: "GreenMetals Metallurgy Europe GmbH" }
+        handoverManifestCode: { type: string, example: "MANIFEST-BM-2026-088" }
+        passportLocked: { type: boolean, example: true }
+
+    # ----------------------------------------------------------------
+    # EXCEL IMPORT DTOs
+    # ----------------------------------------------------------------
+    ImportPreviewResponse:
+      type: object
+      required: [totalRowsFound, validRowsCount, invalidRowsCount, errorsSummary]
+      properties:
+        totalRowsFound: { type: integer, example: 150 }
+        validRowsCount: { type: integer, example: 148 }
+        invalidRowsCount: { type: integer, example: 2 }
+        errorsSummary:
+          type: array
+          items:
+            type: object
+            properties:
+              rowNumber: { type: integer, example: 42 }
+              field: { type: string, example: "serialNumber" }
+              message: { type: string, example: "Duplicate serial number VF-BAT-VF8-2026-00102 already exists in database." }
+
+    ImportCommitResponse:
+      type: object
+      required: [batchCode, totalImported, status, committedAt]
+      properties:
+        batchCode: { type: string, example: "BATCH-202610-VINES-01" }
+        totalImported: { type: integer, example: 148 }
+        status: { type: string, example: "COMPLETED" }
+        committedAt: { type: string, format: date-time }
+
+    # ----------------------------------------------------------------
+    # PUBLIC QR PASSPORT DTOs
+    # ----------------------------------------------------------------
+    PublicPassportResponse:
+      type: object
+      required: [serialNumber, modelName, cellChemistry, nominalCapacityKwh, currentSoh, sohRating, carbonFootprintKgCo2ePerKwh, carbonClass, recycledCobaltPercent, recycledLithiumPercent, recycledNickelPercent, un383Certified, qrVerified]
+      properties:
+        serialNumber: { type: string, example: "VF-BAT-VF8-2026-00892" }
+        modelName: { $ref: '#/components/schemas/VehicleModelEnum' }
+        cellChemistry: { $ref: '#/components/schemas/CellChemistryEnum' }
+        nominalCapacityKwh: { type: number, format: float, example: 87.70 }
+        currentSoh: { type: number, format: float, example: 92.40 }
+        sohRating: { type: string, example: "HEALTHY", enum: [HEALTHY, WARNING, SECOND_LIFE_CANDIDATE, CRITICAL] }
+        totalCycles: { type: integer, example: 280 }
+        carbonFootprintKgCo2ePerKwh: { type: number, format: float, example: 72.50 }
+        carbonClass: { type: string, example: "A" }
+        recycledCobaltPercent: { type: number, format: float, example: 16.00 }
+        recycledLithiumPercent: { type: number, format: float, example: 6.00 }
+        recycledNickelPercent: { type: number, format: float, example: 18.00 }
+        un383Certified: { type: boolean, example: true }
+        qrVerified: { type: boolean, example: true }
+        anonymizedServiceTimeline:
+          type: array
+          items:
+            type: object
+            properties:
+              eventDate: { type: string, format: date }
+              eventType: { type: string, example: "ROUTINE_INSPECTION" }
+              workshopCity: { type: string, example: "Hanoi" }
+              sohRecorded: { type: number, format: float, example: 92.40 }
+
+    # ----------------------------------------------------------------
+    # GOVERNANCE & AUDIT DTOs
+    # ----------------------------------------------------------------
+    AuditLogItem:
+      type: object
+      required: [id, actorEmail, actorRole, clientIp, action, tableName, recordId, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        actorEmail: { type: string, example: "lead.longbien@vinfast.vn" }
+        actorRole: { type: string, example: "STATION_LEAD" }
+        clientIp: { type: string, example: "14.162.140.28" }
+        action: { $ref: '#/components/schemas/AuditActionEnum' }
+        tableName: { type: string, example: "battery_swap_orders" }
+        recordId: { type: string, example: "512" }
+        oldValuesJson: { type: object, nullable: true }
+        newValuesJson: { type: object, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    PaginatedAuditLogsResponse:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLogItem'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    CreateUserRequest:
+      type: object
+      required: [email, fullName, staffCode, role, password]
+      properties:
+        email: { type: string, format: email, example: "tech.tuan@vinfast.vn" }
+        fullName: { type: string, example: "Nguyen Anh Tuan" }
+        staffCode: { type: string, example: "VF-TECH-109" }
+        phone: { type: string, example: "+84988776655" }
+        role: { $ref: '#/components/schemas/UserRoleEnum' }
+        workshopId: { type: integer, format: int64, nullable: true, example: 3 }
+        password: { type: string, minLength: 8, example: "VinFast2026!" }
+
+    UserDetailResponse:
+      type: object
+      required: [id, email, fullName, staffCode, role, isActive, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        email: { type: string, example: "tech.tuan@vinfast.vn" }
+        fullName: { type: string, example: "Nguyen Anh Tuan" }
+        staffCode: { type: string, example: "VF-TECH-109" }
+        phone: { type: string, nullable: true, example: "+84988776655" }
+        role: { $ref: '#/components/schemas/UserRoleEnum' }
+        workshopId: { type: integer, format: int64, nullable: true, example: 3 }
+        isActive: { type: boolean, example: true }
+        createdAt: { type: string, format: date-time }
+
+    PaginatedUsersResponse:
+      type: object
+      required: [items, meta]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDetailResponse'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+security:
+  - BearerAuth: []
