@@ -398,77 +398,209 @@ flowchart TB
 
 ## 4. Mô Hình Cơ Sở Dữ Liệu & Hợp Đồng OpenAPI 3.0
 
-### 4.1 Sơ Đồ Thực Thể (ERD)
+### 4.1 Sơ Đồ Thực Thể Liên Kết (ERD) & Cơ Sở Dữ Liệu
+
+Mô hình PostgreSQL 16 (`vsf_core`) bao phủ trọn vẹn 13 bảng thực thể nghiệp vụ: Quản lý Pack Pin & Hộ Chiếu Số EU (EU 2023/1542), quan hệ hoán đổi 1-N giữa Xe điện và Pack Pin (`vehicles` & `vehicle_battery_histories`), nhật ký chẩn đoán đo kiểm dung lượng & cảnh báo lệch áp cell ($\Delta V > 0.05V$), phê duyệt lệnh đổi pin mới, điều phối tái sinh Trạm sạc V-Green BESS, bàn giao tái chế Black Mass và hệ thống Audit Log bất biến.
 
 ```mermaid
 erDiagram
-    app_users ||--o{ battery_inspections : inspects
-    app_users ||--o{ second_life_deployments : approves
-    app_users ||--o{ import_batches : imports
-    app_users ||--o{ audit_logs : triggers
+    workshops ||--o{ app_users : "employs"
+    workshops ||--o{ batteries : "current_location"
+    workshops ||--o{ vehicle_battery_histories : "service_location"
+    workshops ||--o{ battery_inspections : "test_facility"
 
-    battery_models ||--o{ battery_packs : classifies
-    battery_packs ||--o{ battery_inspections : records
-    battery_packs ||--o{ second_life_deployments : repurposes
+    batteries ||--|| battery_passports : "has_passport"
+    batteries ||--o{ vehicle_battery_histories : "lifecycle_timeline"
+    batteries ||--o{ battery_inspections : "inspected_in"
+    batteries ||--o{ bess_allocations : "allocated_to"
+    batteries ||--o| battery_recyclings : "disposed_to"
 
-    battery_models {
+    vehicles ||--o{ vehicle_battery_histories : "battery_history"
+    vehicles ||--o{ battery_inspections : "vehicle_tested"
+    vehicles ||--o| batteries : "current_mounted_pack"
+
+    battery_inspections ||--o| battery_swap_orders : "triggers_swap"
+    bess_stations ||--o{ bess_allocations : "contains_packs"
+    import_batches ||--o{ batteries : "imported_packs"
+
+    app_users ||--o{ battery_inspections : "performed_by"
+    app_users ||--o{ battery_swap_orders : "approved_by"
+    app_users ||--o{ bess_allocations : "assigned_by"
+    app_users ||--o{ battery_recyclings : "authorized_by"
+    app_users ||--o{ import_batches : "uploaded_by"
+    app_users ||--o{ audit_logs : "actor"
+
+    workshops {
         bigint id PK
-        varchar model_code UK "VF3, VF5, VF8, VF9"
-        varchar model_name
-        battery_chemistry chemistry "LFP, NMC"
-        numeric design_capacity_kwh
-        numeric nominal_voltage
-        numeric warranty_soh_threshold "70.00%"
+        varchar code UK
+        varchar name
+        varchar city
+        boolean is_active
+        timestamptz created_at
     }
 
-    battery_packs {
+    app_users {
         bigint id PK
-        varchar serial_number UK "Mã QR Hộ chiếu số"
-        bigint model_id FK
-        varchar vehicle_vin
-        varchar vehicle_plate
-        date manufacture_date
-        numeric current_soh_percent "Điểm sức khỏe SoH"
-        int cycle_count "Số chu kỳ sạc"
-        battery_status status "ON_VEHICLE, RECALL_PENDING..."
-        numeric carbon_footprint_kg_co2
+        bigint workshop_id FK
+        varchar email UK
+        varchar password_hash
+        varchar full_name
+        varchar staff_code UK
+        user_role role
+        boolean is_active
+    }
+
+    batteries {
+        bigint id PK
+        varchar serial_number UK
+        vehicle_model model_name
+        cell_chemistry cell_chemistry
+        numeric nominal_capacity_kwh
+        numeric nominal_voltage_v
+        lifecycle_status lifecycle_status
+        numeric current_soh
+        integer total_cycles
+        bigint current_workshop_id FK
+        bigint import_batch_id FK
+        timestamptz deleted_at
+    }
+
+    battery_passports {
+        bigint id PK
+        bigint battery_id FK,UK
+        varchar passport_id UK
+        varchar qr_payload_url
+        varchar data_matrix_hash
+        varchar eu_declaration_of_conformity
+        numeric carbon_footprint_total_kg_co2e_per_kwh
+        varchar carbon_footprint_performance_class
+        numeric recycled_cobalt_percent
+        numeric recycled_lithium_percent
+        numeric recycled_nickel_percent
+        boolean safety_test_un38_3_certified
+        passport_status passport_status
+    }
+
+    vehicles {
+        bigint id PK
+        varchar vin UK
+        varchar license_plate UK
+        vehicle_model model_name
+        varchar customer_name
+        bigint current_battery_id FK,UK
+        integer total_odometer_km
+        date registered_at
+    }
+
+    vehicle_battery_histories {
+        bigint id PK
+        bigint vehicle_id FK
+        bigint battery_id FK
+        swap_action action_type
+        integer odometer_at_action
+        numeric battery_soh_at_action
+        timestamptz installed_at
+        timestamptz removed_at
+        bigint workshop_id FK
+        bigint technician_id FK
     }
 
     battery_inspections {
         bigint id PK
-        bigint pack_id FK
-        date inspection_date
+        bigint battery_id FK
+        bigint vehicle_id FK
+        bigint workshop_id FK
+        bigint technician_id FK
+        timestamptz inspection_date
         numeric measured_capacity_kwh
-        numeric calculated_soh_percent
+        numeric calculated_soh
         numeric internal_resistance_mohm
-        varchar station_name
-        bigint inspector_id FK
+        integer cycle_count_reading
+        numeric v_max_volts
+        numeric v_min_volts
+        numeric v_delta_volts
+        boolean has_cell_fault
+        inspection_conclusion conclusion
     }
 
-    second_life_deployments {
+    battery_swap_orders {
         bigint id PK
-        bigint pack_id FK
-        varchar bess_station_code "Trạm sạc V-Green"
-        date deployment_date
-        numeric initial_soh_at_deploy
-        varchar cluster_position "Vị trí tủ rack"
+        bigint inspection_id FK,UK
+        bigint vehicle_id FK
+        bigint old_battery_id FK
+        bigint new_battery_id FK
+        bigint station_lead_id FK
+        swap_order_status status
+        timestamptz approved_at
+        timestamptz completed_at
+    }
+
+    bess_stations {
+        bigint id PK
+        varchar station_code UK
+        varchar name
+        bigint workshop_id FK
+        numeric capacity_target_kwh
+        numeric current_installed_kwh
+        integer max_pack_slots
+        integer active_pack_count
+        boolean is_online
+    }
+
+    bess_allocations {
+        bigint id PK
+        bigint bess_station_id FK
+        bigint battery_id FK,UK
+        integer slot_number
+        numeric allocated_soh
+        timestamptz allocated_at
+        timestamptz decommissioned_at
+        bigint allocated_by FK
+    }
+
+    battery_recyclings {
+        bigint id PK
+        bigint battery_id FK,UK
+        varchar partner_name
+        date handover_date
+        varchar handover_manifest_code
+        numeric recovered_lithium_kg
+        numeric recovered_cobalt_kg
+        numeric recovered_nickel_kg
         bigint approved_by FK
+    }
+
+    import_batches {
+        bigint id PK
+        varchar batch_code UK
+        varchar original_file_name
+        integer total_rows
+        integer successful_rows
+        integer failed_rows
+        import_status status
+        bigint imported_by FK
+        timestamptz imported_at
     }
 
     audit_logs {
         bigint id PK
         bigint actor_user_id FK
+        varchar actor_email
+        varchar actor_role
+        varchar client_ip
         audit_action action
-        varchar entity_name
-        bigint entity_id
-        jsonb details
+        varchar table_name
+        varchar record_id
+        jsonb old_values_json
+        jsonb new_values_json
         timestamptz created_at
     }
 ```
 
-- File DDL chi tiết: [src/database/vsf_battery.sql](src/database/vsf_battery.sql)
-- DBML quan hệ: [src/database/vsf_battery.dbml](src/database/vsf_battery.dbml)
-- Hợp đồng API: [docs/api/openapi.yaml](docs/api/openapi.yaml)
+Tài liệu thiết kế chi tiết cơ sở dữ liệu:
+- **Đặc tả mô hình dữ liệu & ràng buộc:** [docs/05-data-model.md](docs/05-data-model.md)
+- **Sơ đồ thực thể liên kết, phân nhóm & SQL Indexes:** [docs/DATABASE.md](docs/DATABASE.md)
+- **Mã nguồn lược đồ DBML 2.0 chuẩn hóa:** [src/database/schema.dbml](src/database/schema.dbml)
 
 ---
 

@@ -1,0 +1,347 @@
+Project vinfast_battery_passport {
+  database_type: "PostgreSQL"
+  Note: '''
+    Product: VSF — VinFast Battery Passport & Second-Life Platform.
+    Target Schema: vsf_core.
+    Compliant with EU Battery Regulation (EU 2023/1542), VinFast 1-N vehicle-battery lifecycle,
+    and V-Green BESS second-life container deployment.
+  '''
+}
+
+// --------------------------------------------------
+// ENUMS
+// --------------------------------------------------
+Enum user_role {
+  ADMIN_HQ
+  STATION_LEAD
+  TECHNICIAN
+  AUDITOR_PUBLIC
+}
+
+Enum vehicle_model {
+  VF3
+  VF5
+  VF6
+  VF7
+  VF8
+  VF9
+  VFe34
+}
+
+Enum cell_chemistry {
+  LFP
+  NMC
+}
+
+Enum lifecycle_status {
+  NEW_MANUFACTURED
+  FIRST_LIFE_VEHICLE
+  RECALL_PENDING
+  RETIRED_FROM_VEHICLE
+  SECOND_LIFE_BESS
+  RECYCLED
+}
+
+Enum passport_status {
+  ACTIVE
+  SUSPENDED
+  EXPIRED_RECYCLED
+}
+
+Enum swap_action {
+  INITIAL_INSTALL
+  MAINTENANCE_SWAP
+  WARRANTY_REPLACEMENT
+  RETIRE_TO_BESS
+}
+
+Enum inspection_conclusion {
+  PASS_FIRST_LIFE
+  FAIL_DEGRADED_SOH
+  FAIL_CELL_VOLTAGE_FAULT
+  SCHEDULE_SWAP
+}
+
+Enum swap_order_status {
+  PENDING_LEAD_APPROVAL
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+Enum import_status {
+  PENDING
+  VALIDATING
+  COMPLETED
+  FAILED
+}
+
+Enum audit_action {
+  CREATE
+  UPDATE
+  SOFT_DELETE
+  SWAP_BATTERY
+  ALLOCATE_BESS
+  RECYCLE_DISPOSAL
+  EXPORT_PDF
+  IMPORT_EXCEL
+  LOGIN
+}
+
+// --------------------------------------------------
+// TABLE GROUPS
+// --------------------------------------------------
+TableGroup identity_and_workshops {
+  workshops
+  app_users
+}
+
+TableGroup battery_and_passports {
+  batteries
+  battery_passports
+}
+
+TableGroup vehicles_and_history {
+  vehicles
+  vehicle_battery_histories
+}
+
+TableGroup inspection_and_swaps {
+  battery_inspections
+  battery_swap_orders
+}
+
+TableGroup second_life_and_recycling {
+  bess_stations
+  bess_allocations
+  battery_recyclings
+}
+
+TableGroup governance_and_audit {
+  import_batches
+  audit_logs
+}
+
+// --------------------------------------------------
+// TABLES
+// --------------------------------------------------
+Table workshops {
+  id bigint [pk, increment]
+  code varchar(32) [not null, unique]
+  name varchar(255) [not null]
+  address varchar(500) [not null]
+  city varchar(100) [not null]
+  latitude decimal(9,6)
+  longitude decimal(9,6)
+  is_active boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'VinFast Service Centers and V-Green Charging Stations nationwide'
+}
+
+Table app_users {
+  id bigint [pk, increment]
+  workshop_id bigint [ref: > workshops.id, null]
+  email varchar(255) [not null, unique]
+  password_hash varchar(255) [not null]
+  full_name varchar(255) [not null]
+  staff_code varchar(64) [not null, unique]
+  phone varchar(32)
+  role user_role [not null, default: 'TECHNICIAN']
+  is_active boolean [not null, default: true]
+  last_login_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  deleted_at timestamptz
+
+  Note: 'VinFast internal operators: Admin HQ, Station Leads, Technicians'
+}
+
+Table batteries {
+  id bigint [pk, increment]
+  serial_number varchar(64) [not null, unique]
+  model_name vehicle_model [not null]
+  cell_chemistry cell_chemistry [not null]
+  nominal_capacity_kwh decimal(6,2) [not null]
+  nominal_voltage_v decimal(6,2) [not null]
+  pack_weight_kg decimal(6,2) [not null]
+  manufacturer varchar(128) [not null, default: 'VinES']
+  manufacture_date date [not null]
+  lifecycle_status lifecycle_status [not null, default: 'NEW_MANUFACTURED']
+  current_soh decimal(5,2) [not null, default: 100.00]
+  total_cycles integer [not null, default: 0]
+  current_workshop_id bigint [ref: > workshops.id, null]
+  import_batch_id bigint [ref: > import_batches.id, null]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  deleted_at timestamptz
+
+  Note: 'Physical EV Battery pack tracking entity'
+}
+
+Table battery_passports {
+  id bigint [pk, increment]
+  battery_id bigint [not null, unique, ref: - batteries.id]
+  passport_id varchar(128) [not null, unique]
+  qr_payload_url varchar(512) [not null]
+  data_matrix_hash varchar(128) [not null]
+  eu_declaration_of_conformity varchar(128) [not null]
+  carbon_footprint_total_kg_co2e_per_kwh decimal(6,2) [not null]
+  carbon_footprint_performance_class varchar(2) [not null]
+  recycled_cobalt_percent decimal(4,2) [not null]
+  recycled_lithium_percent decimal(4,2) [not null]
+  recycled_nickel_percent decimal(4,2) [not null]
+  safety_test_un38_3_certified boolean [not null, default: true]
+  qr_issued_at timestamptz [not null, default: `now()`]
+  passport_status passport_status [not null, default: 'ACTIVE']
+
+  Note: 'Digital Battery Passport per EU 2023/1542 regulations'
+}
+
+Table vehicles {
+  id bigint [pk, increment]
+  vin varchar(17) [not null, unique]
+  license_plate varchar(32) [not null, unique]
+  model_name vehicle_model [not null]
+  customer_name varchar(255) [not null]
+  customer_phone varchar(32) [not null]
+  current_battery_id bigint [unique, ref: - batteries.id, null]
+  total_odometer_km integer [not null, default: 0]
+  registered_at date [not null]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'Commercial VinFast Electric Vehicles'
+}
+
+Table vehicle_battery_histories {
+  id bigint [pk, increment]
+  vehicle_id bigint [not null, ref: > vehicles.id]
+  battery_id bigint [not null, ref: > batteries.id]
+  action_type swap_action [not null]
+  odometer_at_action integer [not null]
+  battery_soh_at_action decimal(5,2) [not null]
+  installed_at timestamptz [not null, default: `now()`]
+  removed_at timestamptz [null]
+  workshop_id bigint [not null, ref: > workshops.id]
+  technician_id bigint [not null, ref: > app_users.id]
+  swap_reason text
+
+  Note: '1-N Relationship audit log connecting vehicle to battery swaps'
+}
+
+Table battery_inspections {
+  id bigint [pk, increment]
+  battery_id bigint [not null, ref: > batteries.id]
+  vehicle_id bigint [ref: > vehicles.id, null]
+  workshop_id bigint [not null, ref: > workshops.id]
+  technician_id bigint [not null, ref: > app_users.id]
+  inspection_date timestamptz [not null, default: `now()`]
+  measured_capacity_kwh decimal(6,2) [not null]
+  calculated_soh decimal(5,2) [not null]
+  internal_resistance_mohm decimal(6,2) [not null]
+  cycle_count_reading integer [not null]
+  cell_count integer [not null, default: 96]
+  v_max_volts decimal(4,3) [not null]
+  v_min_volts decimal(4,3) [not null]
+  v_delta_volts decimal(4,3) [not null]
+  has_cell_fault boolean [not null, default: false]
+  operating_temperature_c decimal(4,1) [not null]
+  conclusion inspection_conclusion [not null]
+  diagnostic_notes text
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: 'Field maintenance diagnostic and SoH measurement log'
+}
+
+Table battery_swap_orders {
+  id bigint [pk, increment]
+  inspection_id bigint [not null, unique, ref: - battery_inspections.id]
+  vehicle_id bigint [not null, ref: > vehicles.id]
+  old_battery_id bigint [not null, ref: > batteries.id]
+  new_battery_id bigint [not null, ref: > batteries.id]
+  station_lead_id bigint [not null, ref: > app_users.id]
+  status swap_order_status [not null, default: 'PENDING_LEAD_APPROVAL']
+  rejection_reason text
+  approved_at timestamptz
+  completed_at timestamptz
+
+  Note: 'Official battery replacement order requiring Station Lead sign-off'
+}
+
+Table bess_stations {
+  id bigint [pk, increment]
+  station_code varchar(32) [not null, unique]
+  name varchar(255) [not null]
+  workshop_id bigint [ref: > workshops.id, null]
+  capacity_target_kwh decimal(8,2) [not null]
+  current_installed_kwh decimal(8,2) [not null, default: 0]
+  max_pack_slots integer [not null, default: 24]
+  active_pack_count integer [not null, default: 0]
+  is_online boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'V-Green BESS Stationary Storage Container Hubs'
+}
+
+Table bess_allocations {
+  id bigint [pk, increment]
+  bess_station_id bigint [not null, ref: > bess_stations.id]
+  battery_id bigint [not null, unique, ref: > batteries.id]
+  slot_number integer [not null]
+  allocated_soh decimal(5,2) [not null]
+  allocated_at timestamptz [not null, default: `now()`]
+  decommissioned_at timestamptz
+  allocated_by bigint [not null, ref: > app_users.id]
+
+  Note: 'Second-Life battery deployment into stationary storage racks'
+}
+
+Table battery_recyclings {
+  id bigint [pk, increment]
+  battery_id bigint [not null, unique, ref: - batteries.id]
+  partner_name varchar(255) [not null]
+  handover_date date [not null]
+  handover_manifest_code varchar(64) [not null]
+  recovered_lithium_kg decimal(6,2)
+  recovered_cobalt_kg decimal(6,2)
+  recovered_nickel_kg decimal(6,2)
+  certificate_doc_url varchar(512)
+  approved_by bigint [not null, ref: > app_users.id]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: 'End-of-life battery recycling and Black Mass extraction record'
+}
+
+Table import_batches {
+  id bigint [pk, increment]
+  batch_code varchar(64) [not null, unique]
+  original_file_name varchar(255) [not null]
+  total_rows integer [not null]
+  successful_rows integer [not null, default: 0]
+  failed_rows integer [not null, default: 0]
+  error_summary_json jsonb
+  status import_status [not null, default: 'PENDING']
+  imported_by bigint [not null, ref: > app_users.id]
+  imported_at timestamptz [not null, default: `now()`]
+
+  Note: 'Batch import records for factory-shipped packs from VinES'
+}
+
+Table audit_logs {
+  id bigint [pk, increment]
+  actor_user_id bigint [ref: > app_users.id, null]
+  actor_email varchar(255) [not null]
+  actor_role varchar(32) [not null]
+  client_ip varchar(45) [not null]
+  action audit_action [not null]
+  table_name varchar(64) [not null]
+  record_id varchar(64) [not null]
+  old_values_json jsonb
+  new_values_json jsonb
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: 'Immutable append-only audit trail with sensitive PII redaction'
+}
