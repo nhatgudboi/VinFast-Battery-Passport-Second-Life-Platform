@@ -303,6 +303,15 @@ flowchart TB
 
 Đặc tả chi tiết từng thành phần giao diện, chức năng trong màn hình, hợp đồng 8 trạng thái UI/UX và luồng thao tác điển hình được duy trì đầy đủ tại tài liệu kỹ thuật [Kiến Trúc Thông Tin & Phân Cấp Giao Diện (Information Architecture)](docs/04-information-architecture.md).
 
+### 3.3 Bản Vẽ Giao Diện Chi Tiết & Bộ Dữ Liệu Mẫu (UI/UX Wireframes & Mock Data)
+
+Hệ thống giao diện được thiết kế theo ngôn ngữ nhận diện thương hiệu cao cấp **VinFast Electric High-Tech** (Tone màu xanh chủ đạo `#1462D2`, nền Navy tối `#0B192C`, mã màu trạng thái pin chuẩn quốc tế), tài liệu và bản vẽ chi tiết gồm:
+* 🎨 [Hệ Thống Thiết Kế UI/UX VinFast (Design System & Guidelines)](docs/ui-ux/README.md)
+* 📊 [Bản Vẽ Wireframe Màn Hình 1: Dashboard Sức Khỏe Pin & Giám Sát Mạng Lưới (SCR-10)](docs/ui-ux/01-dashboard-wireframe.md)
+* ⚡ [Bản Vẽ Wireframe Màn Hình 2: Sổ Quản Lý Pack Pin & Modal Đo Kiểm Chẩn Đoán (SCR-20 & SCR-22)](docs/ui-ux/02-battery-registry-wireframe.md)
+* 📱 [Bản Vẽ Wireframe Màn Hình 3: Cổng Hộ Chiếu Pin QR Di Động Chuẩn EU 2023/1542 (SCR-02)](docs/ui-ux/03-mobile-qr-portal-wireframe.md)
+* 📦 [Tập Dữ Liệu Mẫu Đầy Đủ (Mock Data JSON chuẩn VinFast VF 3 đến VF 9)](docs/ui-ux/mock-data.json)
+
 ## 3. Kiến Trúc C4 (C4 Architecture)
 
 ### C1 — System Context

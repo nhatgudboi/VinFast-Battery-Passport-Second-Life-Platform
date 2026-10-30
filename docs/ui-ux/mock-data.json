@@ -1,0 +1,198 @@
+{
+  "models": [
+    {
+      "id": 1,
+      "code": "VF3_BASE",
+      "name": "VinFast VF 3",
+      "battery_type": "LFP",
+      "nominal_capacity_ah": 52,
+      "nominal_kwh": 18.64,
+      "manufacturer": "Gotion / VinES"
+    },
+    {
+      "id": 2,
+      "code": "VF5_PLUS",
+      "name": "VinFast VF 5 Plus",
+      "battery_type": "LFP",
+      "nominal_capacity_ah": 105,
+      "nominal_kwh": 37.23,
+      "manufacturer": "Gotion / VinES"
+    },
+    {
+      "id": 3,
+      "code": "VF6_PLUS",
+      "name": "VinFast VF 6 Plus",
+      "battery_type": "LFP",
+      "nominal_capacity_ah": 170,
+      "nominal_kwh": 59.6,
+      "manufacturer": "VinES Hải Phòng"
+    },
+    {
+      "id": 4,
+      "code": "VF7_PLUS",
+      "name": "VinFast VF 7 Plus",
+      "battery_type": "NMC",
+      "nominal_capacity_ah": 210,
+      "nominal_kwh": 75.3,
+      "manufacturer": "CATL / VinES"
+    },
+    {
+      "id": 5,
+      "code": "VF8_PLUS",
+      "name": "VinFast VF 8 Plus",
+      "battery_type": "NMC",
+      "nominal_capacity_ah": 240,
+      "nominal_kwh": 87.7,
+      "manufacturer": "CATL / VinES Hải Phòng"
+    },
+    {
+      "id": 6,
+      "code": "VF9_PLUS",
+      "name": "VinFast VF 9 Plus",
+      "battery_type": "NMC",
+      "nominal_capacity_ah": 330,
+      "nominal_kwh": 123,
+      "manufacturer": "CATL / VinES Hải Phòng"
+    }
+  ],
+  "kpis": {
+    "total_batteries": 12450,
+    "active_on_vehicle": 9820,
+    "warranty_recall_pending": 48,
+    "second_life_bess": 2150,
+    "material_recycled": 432,
+    "avg_network_soh": 88.6,
+    "soh_distribution": {
+      "healthy_above_85": 8120,
+      "moderate_70_85": 1700,
+      "critical_below_70": 48
+    }
+  },
+  "batteries": [
+    {
+      "serial_number": "VF-BAT-VF8-2023-00912",
+      "model_name": "VinFast VF 8 Plus",
+      "battery_type": "NMC",
+      "nominal_kwh": 87.7,
+      "nominal_capacity_ah": 240,
+      "measured_capacity_ah": 162,
+      "soh_percentage": 67.5,
+      "cell_delta_v": 0.024,
+      "has_cell_fault": false,
+      "lifecycle_status": "RECALL_PENDING",
+      "assigned_vin": "VNF8A21P5PA004312",
+      "license_plate": "29E-882.14",
+      "fleet_type": "GSM_XANH_SM",
+      "workshop": "VinFast Service Ocean Park",
+      "carbon_footprint": 54.2,
+      "recycled_content_pct": 18.5,
+      "qr_url": "https://vsf.vinfast.vn/passport/VF-BAT-VF8-2023-00912",
+      "warranty_eligible": true,
+      "last_inspected_at": "2026-10-28T09:15:00Z"
+    },
+    {
+      "serial_number": "VF-BAT-VF5-2024-03120",
+      "model_name": "VinFast VF 5 Plus",
+      "battery_type": "LFP",
+      "nominal_kwh": 37.23,
+      "nominal_capacity_ah": 105,
+      "measured_capacity_ah": 98.2,
+      "soh_percentage": 93.5,
+      "cell_delta_v": 0.015,
+      "has_cell_fault": false,
+      "lifecycle_status": "ON_VEHICLE",
+      "assigned_vin": "VNF5B10L1RA018992",
+      "license_plate": "30K-451.29",
+      "fleet_type": "RETAIL_PRIVATE",
+      "workshop": "VinFast Service Phạm Hùng",
+      "carbon_footprint": 48,
+      "recycled_content_pct": 22,
+      "qr_url": "https://vsf.vinfast.vn/passport/VF-BAT-VF5-2024-03120",
+      "warranty_eligible": false,
+      "last_inspected_at": "2026-10-29T14:30:00Z"
+    },
+    {
+      "serial_number": "VF-BAT-VF9-2023-00108",
+      "model_name": "VinFast VF 9 Plus",
+      "battery_type": "NMC",
+      "nominal_kwh": 123,
+      "nominal_capacity_ah": 330,
+      "measured_capacity_ah": 293.7,
+      "soh_percentage": 89,
+      "cell_delta_v": 0.072,
+      "has_cell_fault": true,
+      "lifecycle_status": "RECALL_PENDING",
+      "assigned_vin": "VNF9C32A9PA001102",
+      "license_plate": "51K-991.02",
+      "fleet_type": "RETAIL_PRIVATE",
+      "workshop": "VinFast Service Thảo Điền",
+      "carbon_footprint": 58.5,
+      "recycled_content_pct": 16,
+      "qr_url": "https://vsf.vinfast.vn/passport/VF-BAT-VF9-2023-00108",
+      "warranty_eligible": true,
+      "last_inspected_at": "2026-10-30T08:00:00Z"
+    },
+    {
+      "serial_number": "VF-BAT-VF8-2022-00411",
+      "model_name": "VinFast VF 8 Plus",
+      "battery_type": "NMC",
+      "nominal_kwh": 87.7,
+      "nominal_capacity_ah": 240,
+      "measured_capacity_ah": 151.2,
+      "soh_percentage": 63,
+      "cell_delta_v": 0.031,
+      "has_cell_fault": false,
+      "lifecycle_status": "SECOND_LIFE_BESS",
+      "bess_station": "Trạm Sạc Cao Tốc Pháp Vân - Cầu Giẽ (Rack #B04)",
+      "carbon_footprint": 55,
+      "recycled_content_pct": 18,
+      "qr_url": "https://vsf.vinfast.vn/passport/VF-BAT-VF8-2022-00411",
+      "warranty_eligible": false,
+      "last_inspected_at": "2026-09-12T11:00:00Z"
+    },
+    {
+      "serial_number": "VF-BAT-VF3-2024-00055",
+      "model_name": "VinFast VF 3",
+      "battery_type": "LFP",
+      "nominal_kwh": 18.64,
+      "nominal_capacity_ah": 52,
+      "measured_capacity_ah": 24.5,
+      "soh_percentage": 47.1,
+      "cell_delta_v": 0.085,
+      "has_cell_fault": true,
+      "lifecycle_status": "RECYCLED",
+      "recycler": "Nhà máy Thủy Luyện VinES Hải Phòng (Lô #RC-2026-88)",
+      "carbon_footprint": 46.5,
+      "recycled_content_pct": 25,
+      "qr_url": "https://vsf.vinfast.vn/passport/VF-BAT-VF3-2024-00055",
+      "warranty_eligible": false,
+      "last_inspected_at": "2026-10-15T16:20:00Z"
+    }
+  ],
+  "early_warnings": [
+    {
+      "id": "WARN-01",
+      "severity": "CRITICAL",
+      "serial_number": "VF-BAT-VF9-2023-00108",
+      "vin": "VNF9C32A9PA001102",
+      "license_plate": "51K-991.02",
+      "model": "VF 9 Plus",
+      "soh": 89,
+      "delta_v": 0.072,
+      "reason": "Lệch áp cell nghiêm trọng (72mV > 50mV) - Nguy cơ thoát nhiệt",
+      "action_required": "Khóa pin & Kích hoạt đổi pin khẩn cấp"
+    },
+    {
+      "id": "WARN-02",
+      "severity": "HIGH",
+      "serial_number": "VF-BAT-VF8-2023-00912",
+      "vin": "VNF8A21P5PA004312",
+      "license_plate": "29E-882.14",
+      "model": "VF 8 Plus",
+      "soh": 67.5,
+      "delta_v": 0.024,
+      "reason": "SoH tụt dưới 70% (67.5%) - Đạt điều kiện cam kết đổi pin VinFast",
+      "action_required": "Tạo lệnh đổi pack pin mới & Điều phối pin cũ sang BESS"
+    }
+  ]
+}
