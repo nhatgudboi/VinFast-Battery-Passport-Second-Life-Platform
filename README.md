@@ -657,88 +657,247 @@ Tài liệu chi tiết kỹ thuật API:
 
 ---
 
-## 5. Sơ Đồ Tuần Tự Cốt Lõi (Sequence Diagrams)
+## 5. Cấu Trúc Thư Mục Frontend & Backend (Folder Structures)
 
-Đặc tả chi tiết 4 luồng nghiệp vụ tương tác thời gian thực giữa Kỹ thuật viên, Trưởng xưởng, Người quét mã QR di động và hệ thống cơ sở dữ liệu được duy trì đầy đủ tại [Sơ Đồ Tuần Tự (Sequence Diagrams)](docs/architecture/uml/02-sequence-diagrams.md):
-1. **Luồng 1:** Đo kiểm chẩn đoán dung lượng, phát hiện lệch áp cell ($\Delta V > 0.05\text{V}$) và cảnh báo đổi pin.
-2. **Luồng 2:** Trưởng xưởng phê duyệt đổi pin mới và hoán đổi quan hệ 1-N nguyên tử (Atomic Database Transaction).
-3. **Luồng 3:** Quét mã QR Hộ Chiếu Pin công khai trên di động (Mobile QR lookup dưới 50ms).
-4. **Luồng 4:** Nhập lô dữ liệu pin xuất xưởng từ file Excel nhà máy VinES (ClosedXML preview & atomic bulk commit).
+Cấu trúc dự án tổ chức theo mô hình phân tách độc lập giữa Tầng Trình Diễn (Frontend) và Tầng Máy Chủ (Backend), tuân thủ nguyên tắc Clean Architecture 3 lớp và cấu trúc Feature-based của React 19.
 
-### Luồng Kiểm Định Pin & Tự Động Kích Hoạt Đổi Pin Miễn Phí (< 70%)
+### 5.1 Bố Cục Thư Mục Toàn Dự Án (Repository Layout)
 
-```mermaid
-sequenceDiagram
-    actor Tech as Kỹ Thuật Viên (Technician)
-    participant UI as Giao diện Xưởng VinFast
-    participant API as InspectionsController
-    participant Svc as BatteryService
-    participant Repo as IBatteryRepository
-    participant Audit as IAuditService
-    participant DB as PostgreSQL
-
-    Tech->>UI: Nhập dung lượng đo thực tế (25.46 kWh), Odo, chu kỳ
-    Tech->>UI: Bấm "Lưu kết quả kiểm định"
-    activate UI
-    UI->>API: POST /api/v1/inspections (Payload kiểm định)
-    activate API
-
-    API->>Svc: ProcessInspectionAsync(draft, actorContext)
-    activate Svc
-
-    Svc->>Repo: GetBatteryWithModelAsync(serialNumber)
-    Repo->>DB: SELECT pack, model WHERE serial_number = @serial
-    DB-->>Repo: Trả về pack VF 5 Plus (Dung lượng gốc = 37.23 kWh)
-    Repo-->>Svc: BatteryPack & Model
-
-    Svc->>Svc: CalculateSoh: (25.46 / 37.23) * 100 = 68.39%
-    Svc->>Svc: DetermineLifecycleStatus: 68.39% < 70.00% -> RECALL_PENDING
-
-    Svc->>Repo: AddInspectionAsync(inspectionRecord)
-    Svc->>Repo: UpdateBatteryStatusAsync(packId, 68.39%, RECALL_PENDING)
-    Repo->>DB: INSERT inspection & UPDATE battery_packs
-
-    Svc->>Audit: LogActionAsync("STATUS_CHANGE", "Kích hoạt bảo hành đổi pin miễn phí cho khách hàng")
-    Audit->>DB: INSERT audit_logs
-
-    Svc-->>API: InspectionResult (SoH: 68.39%, Status: RECALL_PENDING)
-    deactivate Svc
-
-    API-->>UI: HTTP 201 Created (Kèm cảnh báo đổi pin màu đỏ)
-    deactivate API
-    UI-->>Tech: Hiển thị thông báo: "Đã kích hoạt lệnh đổi pin mới VinFast!"
-    deactivate UI
+```text
+d:\VSF/
+├── compose.yaml                         # Khởi chạy PostgreSQL 16 qua Docker
+├── .env.example                         # Cấu hình chuỗi kết nối và JWT Secret
+├── README.md                            # Tài liệu tổng quan toàn diện
+│
+├── docs/                                # Tài liệu kỹ thuật kiến trúc
+│   ├── 01-scope.md … 08-invest-requirements.md
+│   ├── DATABASE.md                      # Sơ đồ và từ điển dữ liệu
+│   ├── api/
+│   │   ├── openapi.yaml                 # Hợp đồng OpenAPI 3.0.4 đầy đủ
+│   │   └── README.md                    # Hướng dẫn gọi API và mẫu request/response
+│   └── architecture/
+│       ├── c4/                          # Sơ đồ kiến trúc C1, C2, C3, C4
+│       └── uml/                         # Sơ đồ Class Diagram & Sequence Diagram
+│
+└── src/
+    ├── database/
+    │   └── schema.dbml                  # Database Markup Language 2.0
+    ├── backend/                         # ASP.NET Core Web API (Clean Architecture 3 lớp)
+    │   ├── Vsf.Api/                     # Presentation: Controllers, Middleware, DTOs, Swagger
+    │   ├── Vsf.Application/             # Core Domain: Services, SoH Calculation, Policy, Interfaces
+    │   └── Vsf.Infrastructure/          # Data Access: PostgreSQL Repositories, ClosedXML, QuestPDF
+    └── frontend/                        # React 19 + Vite + TailwindCSS
+        ├── src/features/                # Phân hệ: auth, dashboard, batteries, inspections, second-life
+        └── src/components/              # Shared components: Navbar, Sidebar, Modals, Tables
 ```
+
+Chi tiết cấu trúc mô-đun và ánh xạ trách nhiệm được duy trì tại [Cấu Trúc Thư Mục (Folder Structure)](docs/07-folder-structure.md).
 
 ---
 
-## 6. Tài Khoản Khởi Tạo Mẫu (Development Seed Users)
+## 6. Thiết Kế Chi Tiết Lớp & Sơ Đồ Tuần Tự (Detailed Class and Sequence Design)
+
+Thiết kế chi tiết cụ thể hóa các khối C4 Component thành các lớp C# thực thi (Controller, Service, Policy, Entity, Repository) và biểu diễn trình tự tương tác thời gian thực giữa các tầng.
+
+### 6.1 C4 Level 4 — Cộng Tác Mã Nguồn (Code Collaboration)
+
+#### L4.1 Luồng Đo Kiểm Chẩn Đoán & Phát Hiện Lỗi Cell (Inspection Pipeline)
+```mermaid
+flowchart TB
+    subgraph inspectionModule["Inspection & Diagnostic Pipeline [Component Level]"]
+        direction TB
+        ctrl["InspectionsController<br/><i>[ASP.NET Core Controller]</i>"]
+        svc["InspectionService<br/><i>[C# Service Class]</i>"]
+        val["DiagnosticValidator<br/><i>[FluentValidation]</i>"]
+        policy["CellFaultSafetyPolicy<br/><i>[Domain Policy: Delta V > 0.05V]</i>"]
+        entity["BatteryInspection<br/><i>[Domain Entity]</i>"]
+        battRepo["IBatteryRepository<br/><i>[C# Interface]</i>"]
+        inspRepo["IBatteryInspectionRepository<br/><i>[C# Interface]</i>"]
+        auditSvc["IAuditService<br/><i>[C# Interface]</i>"]
+
+        ctrl --> val
+        ctrl --> svc
+        svc --> policy
+        svc --> entity
+        svc --> battRepo
+        svc --> inspRepo
+        svc --> auditSvc
+    end
+
+    db[("PostgreSQL Database<br/><i>[vsf_core]</i>")]
+    battRepo --> db
+    inspRepo --> db
+    auditSvc --> db
+
+    classDef c4main fill:#0088ff,color:#fff,stroke:#0055b3
+    classDef c4core fill:#1b365d,color:#fff,stroke:#00205b
+    classDef c4sub fill:#10b981,color:#fff,stroke:#059669
+    class ctrl,svc c4core
+    class val,policy,entity c4main
+    class battRepo,inspRepo,auditSvc c4sub
+```
+
+#### L4.2 Luồng Phê Duyệt Đổi Pin Mới 1-N Nguyên Tử (Swap Pipeline)
+```mermaid
+flowchart TB
+    subgraph swapModule["Atomic 1-N Battery Swap Pipeline [Component Level]"]
+        direction TB
+        swapCtrl["SwapsController<br/><i>[ASP.NET Core Controller]</i>"]
+        swapSvc["SwapWorkflowService<br/><i>[C# Service Class]</i>"]
+        authPolicy["LeadAuthorizationPolicy<br/><i>[Security Policy Class]</i>"]
+        rebinder["VehicleBatteryRebinder<br/><i>[Domain Service: 1-N Rebinding]</i>"]
+        uow["IUnitOfWork<br/><i>[Transaction Boundary]</i>"]
+        swapRepo["ISwapOrderRepository<br/><i>[C# Interface]</i>"]
+        vehRepo["IVehicleRepository<br/><i>[C# Interface]</i>"]
+
+        swapCtrl --> authPolicy
+        swapCtrl --> swapSvc
+        swapSvc --> rebinder
+        swapSvc --> uow
+        rebinder --> swapRepo
+        rebinder --> vehRepo
+    end
+
+    db[("PostgreSQL Database<br/><i>[vsf_core]</i>")]
+    uow --> db
+    swapRepo --> db
+    vehRepo --> db
+
+    classDef c4main fill:#0088ff,color:#fff,stroke:#0055b3
+    classDef c4core fill:#1b365d,color:#fff,stroke:#00205b
+    classDef c4sub fill:#10b981,color:#fff,stroke:#059669
+    class swapCtrl,swapSvc c4core
+    class authPolicy,rebinder c4main
+    class uow,swapRepo,vehRepo c4sub
+```
+
+Đặc tả đầy đủ: [C4 Level 4 — Code](docs/architecture/c4/04-code.md).
+
+### 6.2 Sơ Đồ Lớp Cốt Lõi (Core Class Diagrams)
+
+Sơ đồ lớp chi tiết phân rã các lớp thực thi thuộc 3 phân hệ trọng yếu:
+
+#### Phân Hệ Pack Pin & Hộ Chiếu Số EU
+```mermaid
+classDiagram
+    direction TB
+
+    class BatteriesController {
+        +ListAsync(BatteryQueryRequest) Task~IActionResult~
+        +GetByIdAsync(long) Task~IActionResult~
+        +CreateAsync(CreateBatteryRequest) Task~IActionResult~
+        +GetQrLabelAsync(long) Task~IActionResult~
+    }
+
+    class IBatteryService {
+        <<interface>>
+        +RegisterNewPackAsync(CreateBatteryDto) Task~Battery~
+        +GenerateQrLabelAsync(long) Task~QrLabelDto~
+    }
+
+    class Battery {
+        +long Id
+        +string SerialNumber
+        +VehicleModel ModelName
+        +CellChemistry CellChemistry
+        +decimal NominalCapacityKwh
+        +decimal CurrentSoh
+        +LifecycleStatus LifecycleStatus
+        +BatteryPassport Passport
+        +void UpdateSoh(decimal newSoh, int cycles)
+    }
+
+    class BatteryPassport {
+        +long Id
+        +string PassportId
+        +string QrPayloadUrl
+        +decimal CarbonFootprintKgCo2ePerKwh
+        +decimal RecycledCobaltPercent
+        +decimal RecycledLithiumPercent
+        +decimal RecycledNickelPercent
+        +bool SafetyTestUn38_3Certified
+    }
+
+    BatteriesController --> IBatteryService
+    Battery --> BatteryPassport
+```
+
+Chi tiết đầy đủ 3 sơ đồ lớp phân hệ: [Sơ Đồ Lớp (Class Diagrams)](docs/architecture/uml/01-class-diagrams.md).
+
+### 6.3 Sơ Đồ Tuần Tự Cốt Lõi (Sequence Diagrams)
+
+#### Luồng 1: Đo Kiểm Chẩn Đoán Dung Lượng, Phát Hiện Lệch Áp Cell & Cảnh Báo Đổi Pin
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Tech as 👤 Kỹ Thuật Viên
+    participant UI as 💻 Web Workshop UI
+    participant Ctrl as 🎮 InspectionsController
+    participant Svc as ⚙️ InspectionService
+    participant Policy as 🛡️ CellFaultSafetyPolicy
+    participant Repo as 💾 IBatteryRepository
+    participant DB as 🗄️ PostgreSQL
+
+    Tech->>UI: Cắm máy chẩn đoán, nhập C_measured (60.1 kWh), V_max (4.185V), V_min (4.120V)
+    Tech->>UI: Bấm "Lưu Kết Quả Đo Kiểm"
+    activate UI
+    UI->>Ctrl: POST /api/v1/inspections (Payload DTO)
+    activate Ctrl
+
+    Ctrl->>Svc: ExecuteInspectionAsync(dto, userContext)
+    activate Svc
+    Svc->>Repo: GetBatteryByIdAsync(batteryId)
+    Repo->>DB: SELECT * FROM batteries WHERE id = @id
+    DB-->>Repo: Pack VF8 (Dung lượng định danh = 87.70 kWh)
+    Repo-->>Svc: Battery Entity
+
+    Svc->>Svc: Tính SoH = (60.10 / 87.70) * 100 = 68.53%
+    Svc->>Policy: EvaluateCellImbalance(4.185V, 4.120V)
+    Policy-->>Svc: Delta V = 0.065V > 0.050V (CẢNH BÁO LỆCH ÁP CELL KHẨN CẤP)
+
+    Svc->>Repo: SaveInspectionRecordAsync(inspection)
+    Repo->>DB: INSERT INTO battery_inspections (..., calculated_soh=68.53, v_delta=0.065, has_cell_fault=true)
+    Svc->>Repo: UpdateBatteryStatusAsync(batteryId, 68.53, RECALL_PENDING)
+    Repo->>DB: UPDATE batteries SET current_soh=68.53, lifecycle_status='RECALL_PENDING'
+
+    Svc-->>Ctrl: InspectionResult (Conclusion: FAIL_CELL_VOLTAGE_FAULT, RequiresSwap: true)
+    deactivate Svc
+
+    Ctrl-->>UI: HTTP 201 Created (Hiển thị cảnh báo đỏ & mở Modal đổi pin)
+    deactivate Ctrl
+    UI-->>Tech: Thông báo: "Độ lệch cell 0.065V vượt ngưỡng an toàn! Đã chuyển trạng thái RECALL_PENDING"
+    deactivate UI
+```
+
+Đặc tả đầy đủ 4 luồng tuần tự tương tác thời gian thực: [Sơ Đồ Tuần Tự (Sequence Diagrams)](docs/architecture/uml/02-sequence-diagrams.md).
+
+---
+
+## 7. Tài Khoản Khởi Tạo Mẫu (Development Seed Users)
 
 Tất cả tài khoản trong hệ thống sử dụng chung mật khẩu phát triển:
 > **Mật khẩu chung:** `ChangeMe123!`
 
-| Tài Khoản (Email) | Vai Trò | Trụ Sở / Đơn Vị |
+| Tài Khoản (Email) | Vai Trò | Trụ Sở / Đơn Vị Công Tác |
 |---|:---:|---|
-| `admin@vinfast.vn` | **ADMIN** | Trụ sở chính VinFast |
-| `lead.hanoi@vinfast.vn` | **STATION_LEAD** | VinFast Service Center Phạm Văn Đồng - Hà Nội |
-| `tech.nam@vinfast.vn` | **TECHNICIAN** | VinFast Service Center Phạm Văn Đồng - Hà Nội |
-| `auditor@eu-tuv.de` | **AUDITOR** | TÜV Rheinland Battery Certification (Châu Âu) |
+| `admin.hq@vinfast.vn` | **ADMIN_HQ** | Ban Quản Trị Trụ Sở Chính VinFast |
+| `lead.longbien@vinfast.vn` | **STATION_LEAD** | Xưởng Dịch Vụ VinFast Center Long Biên - Hà Nội |
+| `lead.vgreen@v-green.vn` | **STATION_LEAD** | Cụm Trạm Sạc Tích Điện Đệm V-Green BESS |
+| `tech.an@vinfast.vn` | **TECHNICIAN** | Kỹ Thuật Viên Xưởng VinFast Center Long Biên |
+| `auditor.tuv@tuv-sud.de` | **AUDITOR_PUBLIC** | Chuyên Viên Kiểm Toán TÜV SÜD (Châu Âu) |
 
 ---
 
-## 7. Tiến Độ Dự Án (Project Progress)
+## 8. Tiến Độ Dự Án (Project Progress)
 
-- [x] Nghiên cứu đề bài và phân tích quy chuẩn EU Battery Regulation 2023/1542
-- [x] Xác định phạm vi và chính sách bảo hành đổi pin miễn phí của VinFast (<70%)
-- [x] Lập danh sách tính năng và 16 User Stories chuẩn INVEST
-- [x] Thiết kế ma trận phân quyền 4 Roles (Admin, Station Lead, Technician, Auditor)
-- [x] Thiết kế Kiến trúc Thông tin (IA) và phân cấp màn hình
-- [x] Thiết kế Sơ đồ Kiến trúc C4 (C1 System Context, C2 Container, C3 Component)
-- [x] Thiết kế Mô hình Dữ liệu PostgreSQL DDL, DBML, Triggers và Seeds
-- [x] Soạn thảo Hợp đồng API OpenAPI 3.0.4
-- [x] Thiết kế Class Diagrams và Sequence Diagrams cho các luồng nghiệp vụ cốt lõi
-- [x] Tạo cấu trúc thư mục dự án và thiết lập môi trường Docker Compose
-- [ ] Xây dựng tầng Backend API ASP.NET Core (.NET 9) ba lớp
-- [ ] Xây dựng giao diện React 19 + Vite (Portal quản trị & Trang QR di động)
-- [ ] Tích hợp tính năng Import Excel và xuất file Chứng chỉ PDF
-- [ ] Viết Unit Tests và Integration Tests
+- [x] **Bước 1:** Nghiên cứu Top-Down và phân tích quy chuẩn EU Battery Regulation 2023/1542 (`01-scope.md`, Mindmap tổng & phân nhánh)
+- [x] **Bước 2:** Lập danh mục tính năng, 16 User Stories INVEST và Sơ đồ Use Cases chuẩn hóa (`02-features.md`, `03-use-cases.md`, `08-invest-requirements.md`)
+- [x] **Bước 3:** Thiết kế Kiến trúc Thông tin (IA), sitemap 19 màn hình và hợp đồng 8 trạng thái UI/UX (`04-information-architecture.md`)
+- [x] **Bước 4:** Thiết kế Cơ sở Dữ liệu PostgreSQL 16, DBML 2.0 và chiến lược Indexing dưới 50ms (`05-data-model.md`, `DATABASE.md`, `schema.dbml`)
+- [x] **Bước 5:** Soạn thảo Hợp đồng API OpenAPI 3.0.4 bao phủ 24 endpoints qua 11 tags (`docs/api/openapi.yaml`, `docs/api/README.md`)
+- [x] **Bước 6:** Thiết kế Kiến trúc C4 đầy đủ 4 cấp độ (C1, C2, C3, C4) (`docs/architecture/c4/`)
+- [x] **Bước 7:** Thiết kế Sơ đồ Lớp (Class Diagrams) và 4 Sơ đồ Tuần tự (Sequence Diagrams) (`docs/architecture/uml/`)
+- [x] **Bước 8:** Hoạch định Cấu trúc Thư mục Clean Architecture 3 lớp và React Feature-based (`07-folder-structure.md`)
+- [ ] **Bước 9:** Triển khai mã nguồn Backend ASP.NET Core 9 (Deferred - Chờ lệnh người dùng)
+- [ ] **Bước 10:** Triển khai giao diện React 19 + Vite (Deferred - Chờ lệnh người dùng)
