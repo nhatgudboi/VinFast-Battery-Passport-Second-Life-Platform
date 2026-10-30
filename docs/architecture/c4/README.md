@@ -1,100 +1,55 @@
-# Kiến Trúc C4 — VSF (VinFast Battery Passport)
+# Mô Hình Kiến Trúc C4 (C4 Architecture Model) — VSF
 
-Tài liệu này đặc tả kiến trúc hệ thống VSF theo mô hình C4 (C1 System Context, C2 Container, C3 Component, C4 Code).
+> **Dự án:** VSF — VinFast Battery Passport & Second-Life Platform  
+> **Trạng thái:** TARGET V1 Architecture Baseline  
+> **Đối tượng:** Kỹ sư phần mềm, Kiến trúc sư giải pháp và Chuyên viên kiểm toán kỹ thuật
 
-## C1 — System Context (Ngữ cảnh Hệ thống)
+Mô hình C4 (Context, Containers, Components, Code) phân rã hệ thống VSF theo 4 cấp độ trực quan từ tổng quan đến chi tiết, cung cấp góc nhìn toàn diện về ranh giới hệ thống, các khối runtime, thành phần nghiệp vụ và cấu trúc mã nguồn.
 
 ```mermaid
 flowchart LR
-    admin(["Quản Trị Viên VinFast"])
-    lead(["Trưởng Xưởng Dịch Vụ / Trạm V-Green"])
-    tech(["Kỹ Thuật Viên Đo Kiểm"])
-    publicUser(["Khách Hàng / Kiểm Toán Viên EU"])
+    C1["C1 · System Context<br/><small>Ai sử dụng hệ thống & hệ thống ngoài nào tương tác?</small>"]
+    C2["C2 · Container<br/><small>Những đơn vị runtime & lưu trữ nào tạo nên VSF?</small>"]
+    C3["C3 · Component<br/><small>.NET Backend API được phân rã thành các component nào?</small>"]
+    C4["C4 · Code<br/><small>Cấu trúc class & cộng tác mã nguồn cho 2 tính năng cốt lõi?</small>"]
 
-    subgraph VSF["VSF System [Software System]"]
-        core["VinFast Battery Passport & Second-Life Platform<br/><i>Quản lý hộ chiếu số, SoH, thu hồi đổi pin và trạm tích điện BESS</i>"]
-    end
+    C1 -->|"Zoom vào VSF Platform"| C2
+    C2 -->|"Zoom vào .NET Backend API"| C3
+    C3 -->|"Zoom vào Đo Kiểm & Đổi Pin 1-N"| C4
 
-    vgreen[("Mạng Lưới Trạm Sạc V-Green<br/><i>[Hạ tầng đối tác]</i>")]
-    vines[("Nhà Máy Sản Xuất VinES Hải Phòng<br/><i>[Nguồn dữ liệu xuất xưởng]</i>")]
-
-    admin -- "Cấu hình chính sách & giám sát toàn quốc" --> core
-    lead -- "Phê duyệt đổi pin & điều phối trạm BESS" --> core
-    tech -- "Đo kiểm dung lượng & in tem mã QR" --> core
-    publicUser -- "Quét mã QR tra cứu Hộ chiếu Pin" --> core
-    core -- "Cung cấp pack pin thứ cấp cho trạm sạc" --> vgreen
-    vines -- "Nhập dữ liệu lô pin qua file Excel" --> core
-
-    style core fill:#1b365d,color:#fff
+    classDef c4 fill:#1b365d,color:#fff,stroke:#00205b
+    class C1,C2,C3,C4 c4
 ```
 
-## C2 — Container Diagram (Các Khối Thành Phần)
+---
 
-```mermaid
-flowchart TB
-    operator(["Kỹ thuật viên / Quản lý VinFast"])
-    reader(["Người quét mã QR trên điện thoại"])
+## 1. Mục Lục Các Cấp Độ C4
 
-    subgraph Platform["VSF Software System Boundary"]
-        direction TB
-        subgraph presentation["Tầng Trình Diễn (Presentation)"]
-            web["Web Frontend<br/><i>[Container: React 19 + Vite]</i><br/>Portal quản trị nội bộ & Trang tra cứu QR di động"]
-        end
-        subgraph application["Tầng Ứng Dụng (Application)"]
-            backend[".NET Backend API<br/><i>[Container: ASP.NET Core Web API]</i><br/>Xác thực JWT, RBAC, tính SoH, phân luồng BESS, đọc Excel & xuất PDF"]
-        end
-        subgraph data["Tầng Dữ Liệu (Data)"]
-            database[("PostgreSQL 16<br/><i>[Container: Database]</i><br/>Lưu thông số pin, lịch sử đo kiểm, trạm BESS, user và audit log")]
-        end
-    end
+| Cấp Độ | Tài Liệu Kỹ Thuật | Phạm Vi Mô Tả |
+| :---: | :--- | :--- |
+| **C1** | [01-system-context.md](01-system-context.md) | Ngữ cảnh toàn cầu: 4 nhóm tác nhân, ranh giới phần mềm VSF và 2 đối tác tích hợp ngoại vi (VinES & V-Green BESS). |
+| **C2** | [02-container.md](02-container.md) | Các khối Container runtime: React 19 Web, Mobile QR Browser, ASP.NET Core API, PostgreSQL 16 và File Storage. |
+| **C3** | [03-component.md](03-component.md) | Phân rã 12 thành phần nghiệp vụ bên trong tầng máy chủ .NET Backend. |
+| **C4** | [04-code.md](04-code.md) | Thiết kế cộng tác mã nguồn C# (Class, Interface, Service, Repository, Validator, Policy) cho 2 nghiệp vụ quan trọng nhất. |
 
-    workbook[("File Excel Lô Pin<br/><i>[Tệp dữ liệu VinES]</i>")]
+---
 
-    operator --> web
-    reader --> web
-    web -- "REST / HTTPS / JSON" --> backend
-    workbook -.->|"Upload qua giao diện web"| backend
-    backend -- "Npgsql / SQL" --> database
+## 2. Trạng Thái Hiện Thực Kỹ Thuật
 
-    style web fill:#0088ff,color:#fff
-    style backend fill:#1b365d,color:#fff
-    style database fill:#10b981,color:#fff
-```
+| Thành Phần Runtime | Công Nghệ Mục Tiêu | Trạng Thái Hiện Tại |
+| :--- | :--- | :--- |
+| **Web Frontend** | React 19, Vite, TailwindCSS / Vanilla CSS | Đã thiết kế sitemap 19 màn hình, luồng điều hướng và hợp đồng UI |
+| **Mobile QR Portal** | Responsive Web App (Mobile-First) | Đã đặc tả màn hình tra cứu công khai không cần login và tải PDF |
+| **.NET Backend API** | C#, ASP.NET Core 9 Web API, RESTful | Đã hoàn thiện hợp đồng OpenAPI 3.0.4 đầy đủ 24 endpoints |
+| **Cơ Sở Dữ Liệu** | PostgreSQL 16 (Schema `vsf_core`) | Đã thiết kế 13 bảng thực thể quan hệ, DBML 2.0 và chiến lược Indexing < 50ms |
+| **Lưu Trữ Tệp Tin** | File Storage (Local Disk / S3 Object Storage) | Xử lý tệp Excel lô pin VinES (ClosedXML) và Giấy chứng nhận PDF (QuestPDF) |
 
-## C3 — Component Diagram (Cấu Trúc Tầng Backend API)
+---
 
-```mermaid
-flowchart TB
-    subgraph rt[".NET Backend [Container]"]
-        direction TB
-        api["Controllers / HTTP API<br/><i>[ASP.NET Core]</i><br/>Định tuyến RESTful, xác thực JWT, map DTO và lỗi RFC 7807"]
-        auth["Identity & Access Component<br/><i>Đăng nhập, mã hóa PBKDF2, phân quyền 4 vai trò</i>"]
-        battery["Battery Management Component<br/><i>Quản lý danh mục pin, tính toán SoH, tự động kích hoạt bảo hành</i>"]
-        secondlife["Second-Life Coordinator<br/><i>Điều phối pin 55-70% vào các trạm tích điện V-Green BESS</i>"]
-        importer["Excel Import Engine<br/><i>[ClosedXML] Phân tích file xuất xưởng, preview và batch save</i>"]
-        exporter["PDF Document Generator<br/><i>[QuestPDF] Xuất Giấy chứng nhận pin đạt chuẩn EU</i>"]
-        audit["Audit Trail Component<br/><i>Ghi vết bất biến mọi hành vi kiểm định và đổi trạng thái</i>"]
-        repo["Persistence Layer<br/><i>PostgreSQL Repositories & Unit of Work</i>"]
-    end
+## 3. Quy Ước Màu Sắc Trong Sơ Đồ C4
 
-    web["Web Frontend"]
-    db[("PostgreSQL")]
-
-    web --> api
-    api --> auth
-    api --> battery
-    api --> secondlife
-    api --> importer
-    api --> exporter
-    api --> audit
-    auth --> repo
-    battery --> repo
-    secondlife --> repo
-    importer --> battery
-    importer --> repo
-    audit --> repo
-    repo --> db
-
-    style api fill:#1b365d,color:#fff
-    style battery fill:#0088ff,color:#fff
-```
+- **Xanh dương đậm (`#1b365d`):** Đơn vị trọng tâm chính của cấp độ đang zoom.
+- **Xanh dương sáng (`#0088ff`):** Thành phần lân cận nằm cùng trong ranh giới hệ thống VSF.
+- **Xám đậm (`#475569`):** Tác nhân người dùng hoặc hệ thống ngoại vi bên ngoài ranh giới VSF.
+- **Xanh ngọc (`#10b981`):** Cơ sở dữ liệu và kho lưu trữ bền bỉ.
+- **Viền nét đứt (Dashed lines):** Ranh giới phân định Software System, Container hoặc Component.

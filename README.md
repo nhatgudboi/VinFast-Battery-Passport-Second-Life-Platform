@@ -394,6 +394,13 @@ flowchart TB
     style battery fill:#0088ff,color:#fff
 ```
 
+Tài liệu thiết kế kiến trúc chi tiết C4 Model:
+- **Tổng quan mô hình C4:** [docs/architecture/c4/README.md](docs/architecture/c4/README.md)
+- **C1 — System Context:** [docs/architecture/c4/01-system-context.md](docs/architecture/c4/01-system-context.md)
+- **C2 — Container Diagram:** [docs/architecture/c4/02-container.md](docs/architecture/c4/02-container.md)
+- **C3 — Component Diagram:** [docs/architecture/c4/03-component.md](docs/architecture/c4/03-component.md)
+- **C4 — Code Collaboration Design:** [docs/architecture/c4/04-code.md](docs/architecture/c4/04-code.md)
+
 ---
 
 ## 4. Mô Hình Cơ Sở Dữ Liệu & Hợp Đồng OpenAPI 3.0
@@ -651,6 +658,12 @@ Tài liệu chi tiết kỹ thuật API:
 ---
 
 ## 5. Sơ Đồ Tuần Tự Cốt Lõi (Sequence Diagrams)
+
+Đặc tả chi tiết 4 luồng nghiệp vụ tương tác thời gian thực giữa Kỹ thuật viên, Trưởng xưởng, Người quét mã QR di động và hệ thống cơ sở dữ liệu được duy trì đầy đủ tại [Sơ Đồ Tuần Tự (Sequence Diagrams)](docs/architecture/uml/02-sequence-diagrams.md):
+1. **Luồng 1:** Đo kiểm chẩn đoán dung lượng, phát hiện lệch áp cell ($\Delta V > 0.05\text{V}$) và cảnh báo đổi pin.
+2. **Luồng 2:** Trưởng xưởng phê duyệt đổi pin mới và hoán đổi quan hệ 1-N nguyên tử (Atomic Database Transaction).
+3. **Luồng 3:** Quét mã QR Hộ Chiếu Pin công khai trên di động (Mobile QR lookup dưới 50ms).
+4. **Luồng 4:** Nhập lô dữ liệu pin xuất xưởng từ file Excel nhà máy VinES (ClosedXML preview & atomic bulk commit).
 
 ### Luồng Kiểm Định Pin & Tự Động Kích Hoạt Đổi Pin Miễn Phí (< 70%)
 
