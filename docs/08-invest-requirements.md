@@ -45,7 +45,7 @@ US16        Quản lý Hồ sơ Cá nhân & Bảo mật Mật khẩu
 
 ### US03 — Dashboard Giám Sát Sức Khỏe Pin Toàn Quốc
 * **Là một** Trưởng xưởng hoặc Ban quản trị VinFast,
-* **Tôi muốn** xem biểu đồ phân bố độ chai pin SoH và tỷ lệ pin các dòng xe (VF3 $	o$ VF9),
+* **Tôi muốn** xem biểu đồ phân bố độ chai pin SoH và tỷ lệ pin các dòng xe (từ VF 3 đến VF 9),
 * **Để** nắm bắt tình trạng lão hóa của toàn bộ đội xe và nhận cảnh báo sớm các lô pin suy giảm bất thường.
 
 ### US04 — Sổ Quản Lý Pack Pin & Tra Cứu Bộ Lọc
@@ -127,9 +127,9 @@ US16        Quản lý Hồ sơ Cá nhân & Bảo mật Mật khẩu
 | **US06** | PASS | PASS | PASS | PASS | PASS | PASS | Mô hình 1-N giữa Xe (VIN) và Pin (Serial); độc lập vòng đời thiết bị. |
 | **US07** | PASS | PASS | PASS | PASS | PASS | PASS | Sinh mã QR động chuẩn ISO/IEC 18004, xuất tem in vector 50x30mm. |
 | **US08** | PASS | PASS | PASS | PASS | PASS | PASS | Khóa cứng dung lượng danh định theo Model ID, tự động tính SoH. |
-| **US09** | PASS | PASS | PASS | PASS | PASS | PASS | Bắt điều kiện: $\text{SoH} < 70\%$ HOẶC $\text{has\_critical\_cell\_fault} = \text{true}$. |
-| **US10** | PASS | PASS | PASS | PASS | PASS | PASS | Kiểm tra ngưỡng $55\% \le \text{SoH} < 70\%$, gán vị trí tủ rack trạm BESS. |
-| **US11** | PASS | PASS | PASS | PASS | PASS | PASS | Phê duyệt thanh lý cho pin $<55\%$, chuyển trạng thái `RECYCLED`. |
+| **US09** | PASS | PASS | PASS | PASS | PASS | PASS | Bắt điều kiện: SoH < 70% HOẶC has_critical_cell_fault = true. |
+| **US10** | PASS | PASS | PASS | PASS | PASS | PASS | Kiểm tra ngưỡng 55% <= SoH < 70%, gán vị trí tủ rack trạm BESS. |
+| **US11** | PASS | PASS | PASS | PASS | PASS | PASS | Phê duyệt thanh lý cho pin SoH < 55%, chuyển trạng thái `RECYCLED`. |
 | **US12** | PASS | PASS | PASS | PASS | PASS | PASS | Giới hạn 10 MB, 5.000 dòng; cơ chế giao dịch nguyên tử All-or-Nothing. |
 | **US13** | PASS | PASS | PASS | PASS | PASS | PASS | Endpoint mở không cần token; bảo mật thông tin cá nhân chủ xe theo NĐ 13. |
 | **US14** | PASS | PASS | PASS | PASS | PASS | PASS | QuestPDF sinh file A4 có mã QR và chữ ký băm SHA-256 xác thực. |
