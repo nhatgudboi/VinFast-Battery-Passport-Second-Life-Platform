@@ -303,7 +303,7 @@ flowchart TB
 
 Đặc tả chi tiết từng thành phần giao diện, chức năng trong màn hình, hợp đồng 8 trạng thái UI/UX và luồng thao tác điển hình được duy trì đầy đủ tại tài liệu kỹ thuật [Kiến Trúc Thông Tin & Phân Cấp Giao Diện (Information Architecture)](docs/04-information-architecture.md).
 
-### 3.3 Giao Diện Thực Tế & Bộ Dữ Liệu Mẫu (Live UI Screenshots & Mock Data)
+### 2.5 Giao Diện Thực Tế & Bộ Dữ Liệu Mẫu (Live UI Screenshots & Mock Data)
 
 Giao diện hệ thống được hiện thực hóa theo ngôn ngữ nhận diện thương hiệu cao cấp **VinFast Electric High-Tech** (Tone màu xanh chủ đạo `#1462D2`, nền Dark Navy `#0B192C`, trạng thái Sức khỏe Pin SoH chuẩn quốc tế). Mã nguồn giao diện chạy thực tế tại thư mục [`src/frontend/`](src/frontend/) với đầy đủ dữ liệu mẫu (Mock Data):
 
@@ -704,28 +704,27 @@ Cấu trúc dự án tổ chức theo mô hình phân tách độc lập giữa 
 d:\VSF/
 ├── compose.yaml                         # Khởi chạy PostgreSQL 16 qua Docker
 ├── .env.example                         # Cấu hình chuỗi kết nối và JWT Secret
+├── .gitignore                           # Danh mục loại trừ tệp nhị phân Git
 ├── README.md                            # Tài liệu tổng quan toàn diện
 │
-├── docs/                                # Tài liệu kỹ thuật kiến trúc
-│   ├── 01-scope.md … 08-invest-requirements.md
-│   ├── DATABASE.md                      # Sơ đồ và từ điển dữ liệu
-│   ├── api/
-│   │   ├── openapi.yaml                 # Hợp đồng OpenAPI 3.0.4 đầy đủ
-│   │   └── README.md                    # Hướng dẫn gọi API và mẫu request/response
-│   └── architecture/
-│       ├── c4/                          # Sơ đồ kiến trúc C1, C2, C3, C4
-│       └── uml/                         # Sơ đồ Class Diagram & Sequence Diagram
+├── docs/                                # TOÀN BỘ TÀI LIỆU KỸ THUẬT & THIẾT KẾ
+│   ├── 01-scope.md … 08-invest-requirements.md # Tài liệu phân tích và đặc tả
+│   ├── DATABASE.md                      # Sơ đồ ERD, Views, Enums và Indexing
+│   ├── api/                             # Hợp đồng OpenAPI 3.0.4 & Hướng dẫn cURL
+│   ├── architecture/                    # Sơ đồ kiến trúc C4 (C1-C4) & UML Class/Sequence
+│   ├── images/                          # Hình ảnh Mindmap & Screenshots giao diện
+│   └── ui-ux/                           # VinFast Design System, Wireframes & Mock Data
 │
-└── src/
-    ├── database/
-    │   └── schema.dbml                  # Database Markup Language 2.0
-    ├── backend/                         # ASP.NET Core Web API (Clean Architecture 3 lớp)
-    │   ├── Vsf.Api/                     # Presentation: Controllers, Middleware, DTOs, Swagger
-    │   ├── Vsf.Application/             # Core Domain: Services, SoH Calculation, Policy, Interfaces
-    │   └── Vsf.Infrastructure/          # Data Access: PostgreSQL Repositories, ClosedXML, QuestPDF
-    └── frontend/                        # React 19 + Vite + TailwindCSS
-        ├── src/features/                # Phân hệ: auth, dashboard, batteries, inspections, second-life
-        └── src/components/              # Shared components: Navbar, Sidebar, Modals, Tables
+└── src/                                 # MÃ NGUỒN TOÀN BỘ HỆ THỐNG
+    ├── database/                        # PostgreSQL 16 Schema (DBML 2.0 & DDL SQL)
+    ├── backend/                         # ASP.NET Core 9 Web API (Clean Architecture 3 lớp)
+    │   ├── Vsf.Api/                     # Presentation: 10 Controllers, Middleware, Swagger
+    │   ├── Vsf.Application/             # Core Domain: SoH Engine, Swap Service, Interfaces
+    │   └── Vsf.Infrastructure/          # Data Access: Repositories, QuestPDF, Excel Reader
+    └── frontend/                        # Giao diện Web công nghệ cao (HTML5, Vanilla CSS, JS)
+        ├── index.html                   # Màn hình tích hợp 3 phân hệ cốt lõi
+        ├── style.css                    # VinFast Design Tokens, Glassmorphism, Responsive
+        └── app.js                       # Máy tính SoH thời gian thực & Mock Data Engine
 ```
 
 Chi tiết cấu trúc mô-đun và ánh xạ trách nhiệm được duy trì tại [Cấu Trúc Thư Mục (Folder Structure)](docs/07-folder-structure.md).
@@ -931,10 +930,12 @@ Tất cả tài khoản trong hệ thống sử dụng chung mật khẩu phát 
 - [x] **Bước 1:** Nghiên cứu Top-Down và phân tích quy chuẩn EU Battery Regulation 2023/1542 (`01-scope.md`, Mindmap tổng & phân nhánh)
 - [x] **Bước 2:** Lập danh mục tính năng, 16 User Stories INVEST và Sơ đồ Use Cases chuẩn hóa (`02-features.md`, `03-use-cases.md`, `08-invest-requirements.md`)
 - [x] **Bước 3:** Thiết kế Kiến trúc Thông tin (IA), sitemap 19 màn hình và hợp đồng 8 trạng thái UI/UX (`04-information-architecture.md`)
-- [x] **Bước 4:** Thiết kế Cơ sở Dữ liệu PostgreSQL 16, DBML 2.0 và chiến lược Indexing dưới 50ms (`05-data-model.md`, `DATABASE.md`, `schema.dbml`)
-- [x] **Bước 5:** Soạn thảo Hợp đồng API OpenAPI 3.0.4 bao phủ 24 endpoints qua 11 tags (`docs/api/openapi.yaml`, `docs/api/README.md`)
-- [x] **Bước 6:** Thiết kế Kiến trúc C4 đầy đủ 4 cấp độ (C1, C2, C3, C4) (`docs/architecture/c4/`)
-- [x] **Bước 7:** Thiết kế Sơ đồ Lớp (Class Diagrams) và 4 Sơ đồ Tuần tự (Sequence Diagrams) (`docs/architecture/uml/`)
-- [x] **Bước 8:** Hoạch định Cấu trúc Thư mục Clean Architecture 3 lớp và React Feature-based (`07-folder-structure.md`)
-- [ ] **Bước 9:** Triển khai mã nguồn Backend ASP.NET Core 9 (Deferred - Chờ lệnh người dùng)
-- [ ] **Bước 10:** Triển khai giao diện React 19 + Vite (Deferred - Chờ lệnh người dùng)
+- [x] **Bước 4:** Thiết kế UI/UX Wireframe, Design System VinFast & Xây dựng Web App tương tác chạy thực tế (`docs/ui-ux/`, `src/frontend/`)
+- [x] **Bước 5:** Thiết kế Cơ sở Dữ liệu PostgreSQL 16, DBML 2.0 và chiến lược Indexing dưới 50ms (`05-data-model.md`, `DATABASE.md`, `schema.dbml`)
+- [x] **Bước 6:** Soạn thảo Hợp đồng API OpenAPI 3.0.4 bao phủ 24 endpoints qua 11 tags (`docs/api/openapi.yaml`, `docs/api/README.md`)
+- [x] **Bước 7:** Thiết kế Kiến trúc C4 đầy đủ 4 cấp độ (C1, C2, C3, C4) (`docs/architecture/c4/`)
+- [x] **Bước 8:** Thiết kế Sơ đồ Lớp (Class Diagrams) và 4 Sơ đồ Tuần tự (Sequence Diagrams) (`docs/architecture/uml/`)
+- [x] **Bước 9:** Hoàn thiện 16 Tiêu Chí Nghiệm Thu chi tiết (AC-01 đến AC-16) chuẩn BDD (`docs/06-acceptance-criteria.md`)
+- [x] **Bước 10:** Chuẩn hóa Cấu trúc Thư mục Clean Architecture 3 lớp và Quy chuẩn viết mã (`docs/07-folder-structure.md`)
+- [ ] **Bước 11:** Triển khai mã nguồn Backend ASP.NET Core 9 (Sẵn sàng - Chờ lệnh người dùng)
+- [ ] **Bước 12:** Đóng gói Docker Compose toàn hệ thống (Sẵn sàng - Chờ lệnh người dùng)
