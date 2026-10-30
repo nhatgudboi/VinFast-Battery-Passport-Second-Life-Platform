@@ -2,7 +2,7 @@
 
 > **Dự án:** VSF — VinFast Battery Passport & Second-Life Platform  
 > **Trạng thái:** TARGET V1 (Design & Architecture)  
-> **Phương pháp tiếp cận:** Phân tích Top-Down (Từ Problem Space vĩ mô đến Solution Space kỹ thuật)
+> **Phương pháp tiếp cận:** Phân tích Top-Down (Từ Problem Space đến Solution Space kỹ thuật)
 
 ---
 
@@ -33,7 +33,7 @@ Từ năm 2026, Liên minh Châu Âu (EU) áp dụng quy định bắt buộc đ
 
 Hệ sinh thái VinFast vận hành theo mô hình chuỗi cung ứng và dịch vụ khép kín độc nhất:
 
-\`\`\`text
+```text
 [Nhà Máy VinES Hải Phòng]
        │
        ▼ (Cung cấp pack pin mới kèm mã QR)
@@ -54,7 +54,7 @@ Hệ sinh thái VinFast vận hành theo mô hình chuỗi cung ứng và dịch
                               [ĐÁNH GIÁ TÁI SINH SECOND-LIFE]
                               ├── 55% <= SoH < 70%: Lắp vào Trạm sạc BESS V-Green
                               └── SoH < 55% hoặc Hỏng vỏ: Tái chế kim loại tại VinES
-\`\`\`
+```
 
 ### 2.1. Chính sách Thuê Pin & Cam kết "Đổi pin miễn phí khi SoH < 70%"
 
@@ -107,25 +107,25 @@ $$\\text{SoH (\\%)} = \\left( \\frac{C_{\\text{measured}}}{C_{\\text{nominal}}} 
 
 Hệ thống quản lý quả pin qua **4 trạng thái tiến hóa khép kín** (Cradle-to-Cradle):
 
-\`\`\`mermaid
+```mermaid
 stateDiagram-v2
-    [*] --> MANUFACTURED: Xuất xưởng tại VinES
-    MANUFACTURED --> ON_VEHICLE: Gắn lên xe (VIN)
+    [*] --> MANUFACTURED: Xuat xuong tai VinES
+    MANUFACTURED --> ON_VEHICLE: Gan vao xe theo VIN
 
     state ON_VEHICLE {
-        [*] --> Normal_Running: Hoạt động bình thường
-        Normal_Running --> Maintenance_Inspection: Bảo dưỡng định kỳ xưởng
-        Maintenance_Inspection --> Normal_Running: SoH >= 70% & Cell an toàn
+        [*] --> Normal_Running: Hoat dong binh thuong
+        Normal_Running --> Maintenance_Inspection: Kiem dinh dinh ky tai xuong
+        Maintenance_Inspection --> Normal_Running: SoH dat tren 70% va Cell an toan
     }
 
-    ON_VEHICLE --> RECALL_PENDING: SoH < 70% HOẶC Lỗi cell nghiêm trọng
-    RECALL_PENDING --> SECOND_LIFE_BESS: 55% <= SoH < 70% & Cell an toàn
-    RECALL_PENDING --> RECYCLED: SoH < 55% HOẶC Hỏng vỏ / Lỗi cell nặng
+    ON_VEHICLE --> RECALL_PENDING: Thu hoi (SoH duoi 70% hoac Loi cell)
+    RECALL_PENDING --> SECOND_LIFE_BESS: Tai sinh BESS (SoH tu 55% den 70%)
+    RECALL_PENDING --> RECYCLED: Xu ly tai che (SoH duoi 55% hoac Hong vo)
     
-    SECOND_LIFE_BESS --> RECYCLED: Hết tuổi thọ BESS (SoH < 40%)
-    RECYCLED --> DECOMMISSIONED: Đã bóc tách thu hồi Lithium/Cobalt
+    SECOND_LIFE_BESS --> RECYCLED: Het tuoi tho BESS (SoH duoi 40%)
+    RECYCLED --> DECOMMISSIONED: Da boc tach thu hoi Lithium va Cobalt
     DECOMMISSIONED --> [*]
-\`\`\`
+```
 
 ### Chi tiết các giai đoạn vòng đời
 
@@ -135,7 +135,7 @@ stateDiagram-v2
    * Gắn với xe qua mã VIN (Quan hệ 1-N). Cập nhật số chu kỳ sạc, Odometer (km), và lịch sử các lần kiểm định tại xưởng.
 3. **Giai đoạn 3: Thu hồi & Tái sinh (Recall & Second-Life Deployment):**
    * Kích hoạt đổi pin khi: **$\\text{SoH} < 70.00\\%$ HOẶC $\\text{has\\_critical\\_cell\\_fault} = \\text{true}$** (Độ lệch điện áp cell quá lớn $\\Delta V > 100mV$, nguy cơ thoát nhiệt).
-   * Phân luồng: Nếu đạt điều kiện an toàn, pack pin được giải phóng khỏi xe và gắn vào cụm trạm sạc \`SECOND_LIFE_BESS\` V-Green.
+   * Phân luồng: Nếu đạt điều kiện an toàn, pack pin được giải phóng khỏi xe và gắn vào cụm trạm sạc `SECOND_LIFE_BESS` V-Green.
 4. **Giai đoạn 4: Tái chế nguyên liệu (Material Recycling):**
    * Pin chai dưới $55\\%$ hoặc hư hỏng vật lý được chuyển sang nhà máy thủy luyện để thu hồi khoáng sản.
 
