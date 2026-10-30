@@ -126,26 +126,110 @@ flowchart TB
 
 Tầng Backend API bắt buộc thực thi cưỡng chế phân quyền RBAC và token claims; việc ẩn/hiện các nút thao tác tại giao diện React chỉ phục vụ trải nghiệm người dùng (UI/UX).
 
-## 2. Kiến Trúc Thông Tin & Giao Diện Người Dùng
+## 2. Kiến Trúc Thông Tin, Phân Cấp Màn Hình & Giao Diện Người Dùng (Information Architecture)
+
+Kiến trúc thông tin tổ chức không gian làm việc số hóa dựa trên năng lực nghiệp vụ thực tế của chuỗi xưởng dịch vụ và vòng đời pin VinFast. Phân quyền màn hình và điều hướng tuân thủ nghiêm ngặt ma trận RBAC, đồng thời mọi màn hình đều chuẩn hóa 8 trạng thái giao diện (Loading, Empty, Validation, API Error, 401, 403, Saving, Success).
+
+### 2.1 Sơ Đồ Cây Kiến Trúc Thông Tin (Sitemap Tree)
 
 ```text
-Public Gateway (Không cần login)
-├── /login                         [Đăng nhập xác thực nội bộ]
-└── /passport/:serialNumber        [Tra cứu Hộ chiếu Pin QR dành cho Mobile]
-
-Authenticated Workspace
-├── /dashboard                     [KPIs vòng đời & Biểu đồ phân bố SoH]
-├── /batteries                     [Sổ Quản lý Pack Pin toàn hệ thống]
-├── /inspections                   [Nhật ký Đo đạc & Lịch sử Kiểm định]
-├── /second-life                   [Phân luồng Tái sinh Trạm sạc V-Green BESS]
-├── /import                        [Nhập lô Pin mới từ Excel]
-├── /reports                       [Xuất Báo cáo & Chứng nhận Kiểm định PDF]
-├── /audit                         [Nhật ký Kiểm toán Toàn hệ thống]
-├── /users                         [Quản trị Tài khoản & Phân quyền Xưởng]
-└── /profile                       [Hồ sơ Cá nhân & Đổi Mật khẩu]
+VSF — VinFast Battery Passport & Second-Life Platform
+│
+├── Public Portal (Không cần đăng nhập, Mobile-First)
+│   ├── /login                         [SCR-01: Đăng nhập xác thực nội bộ VinFast SSO]
+│   └── /passport/:serialNumber        [SCR-02: Cổng Tra Cứu Hộ Chiếu Pin Công Khai (Mobile QR)]
+│       └── Action: Tải Giấy Chứng Nhận Kiểm Định PDF Chuẩn EU
+│
+└── Authenticated Workspace (Bảo mật JWT & RBAC, Sidebar + Topbar)
+    ├── /dashboard                     [SCR-10: Dashboard Giám Sát SoH & Cảnh Báo Pin Khẩn Cấp]
+    ├── /batteries                     [SCR-20: Sổ Quản Lý Pack Pin Toàn Hệ Thống (Battery Registry)]
+    │   ├── Modal: Khởi Tạo Hộ Chiếu Pin Mới                [SCR-21]
+    │   ├── Modal / Drawer: Chi Tiết Hộ Chiếu & Lịch Sử Xe 1-N [SCR-22]
+    │   └── Modal: Cấu Hình & In Tem Nhãn Mã QR Pack Pin     [SCR-23]
+    ├── /inspections                   [SCR-30: Danh Mục Nhật Ký Đo Kiểm Dung Lượng & Cell]
+    │   ├── Modal: Nhập Liệu Đo Dung Lượng & Đánh Giá SoH    [SCR-31]
+    │   └── Modal: Phê Duyệt Lệnh Đổi Pin Mới Khi Lỗi Cell/SoH < 70% [SCR-32]
+    ├── /second-life                   [SCR-40: Phân Hệ Điều Phối Pin Tái Sinh Trạm Sạc BESS]
+    │   └── Modal: Phê Duyệt Lệnh Thanh Lý & Tái Chế Đen     [SCR-41]
+    ├── /import                        [SCR-50: Nhập Lô Dữ Liệu Pin Xuất Xưởng Từ Excel (VinES)]
+    ├── /reports                       [SCR-60: Trung Tâm Báo Cáo & Xuất Chứng Nhận EU Battery Passport]
+    ├── /audit                         [SCR-70: Nhật Ký Kiểm Toán Toàn Hệ Thống (Audit Trail)]
+    ├── /users                         [SCR-80: Quản Trị Tài Khoản Nhân Sự & Phân Xưởng Dịch Vụ]
+    │   └── Modal: Tạo Mới / Cập Nhật Người Dùng            [SCR-81]
+    ├── /profile                       [SCR-85: Hồ Sơ Cá Nhân & Đổi Mật Khẩu]
+    └── /403                           [SCR-90: Màn Hình Từ Chối Truy Cập (Forbidden)]
 ```
 
----
+### 2.2 Sơ Đồ Phân Cấp Màn Hình (Screen Hierarchy Flow)
+
+Đăng nhập xác thực tại `SCR-01` dẫn trực tiếp vào Authenticated Shell. Không gian làm việc sở hữu thanh điều hướng bên (Sidebar) tương ứng với vai trò đăng nhập; các tương tác thêm mới, đo kiểm, phê duyệt đổi pin và in tem QR được mở thông qua các Modal chuyên dụng. Điều hướng vượt thẩm quyền được Router Guard chặn đứng và chuyển hướng an toàn về màn hình `SCR-90 Forbidden`.
+
+```mermaid
+flowchart TB
+    Login["SCR-01 Login (Public)"]
+    PublicQR["SCR-02 Tra Cứu QR Mobile (Public)"]
+    Shell["Authenticated Workspace Shell"]
+    
+    Login -->|Xác thực hợp lệ| Shell
+    PublicQR -->|Tải PDF| PDFExport["Xuất PDF Chứng Nhận EU"]
+    
+    Shell --> Dashboard["SCR-10 Dashboard SoH"]
+    
+    Shell --> Batteries["SCR-20 Sổ Pack Pin"]
+    Batteries --> BattCreate["SCR-21 Tạo Hộ Chiếu Modal"]
+    Batteries --> BattDetail["SCR-22 Chi Tiết Hộ Chiếu & Xe 1-N"]
+    Batteries --> BattQR["SCR-23 In Tem QR Modal"]
+    
+    Shell --> Inspections["SCR-30 Đo Kiểm Dung Lượng"]
+    Inspections --> InspCreate["SCR-31 Đo Kiểm SoH Modal"]
+    Inspections --> SwapApprove["SCR-32 Duyệt Đổi Pin Modal"]
+    
+    Shell --> SecondLife["SCR-40 Điều Phối BESS"]
+    SecondLife --> RecycleModal["SCR-41 Thanh Lý Tái Chế Modal"]
+    
+    Shell --> Import["SCR-50 Nhập Excel VinES"]
+    Shell --> Reports["SCR-60 Báo Cáo & PDF EU"]
+    Shell --> Audit["SCR-70 Nhật Ký Audit Log"]
+    
+    Shell --> Users["SCR-80 Quản Trị Nhân Sự"]
+    Users --> UserModal["SCR-81 Tạo/Sửa User Modal"]
+    
+    Shell --> Profile["SCR-85 Hồ Sơ Cá Nhân"]
+    Shell --> Forbidden["SCR-90 403 Forbidden"]
+
+    classDef pub fill:#f8fafc,stroke:#94a3b8,color:#1e293b
+    classDef authen fill:#0088ff,stroke:#0055b3,color:#fff
+    classDef sub fill:#f0f9ff,stroke:#0088ff,color:#0055b3
+    class Login,PublicQR pub
+    class Shell,Dashboard,Batteries,Inspections,SecondLife,Import,Reports,Audit,Users,Profile,Forbidden authen
+    class BattCreate,BattDetail,BattQR,InspCreate,SwapApprove,RecycleModal,UserModal,PDFExport sub
+```
+
+### 2.3 Bảng Danh Mục Màn Hình & Phân Quyền (Screen Inventory)
+
+| Mã Màn Hình | Tên Màn Hình & Phân Hệ | Dạng Trình Bày | URL Route | Phân Quyền Truy Cập (RBAC) | Ca Sử Dụng Liên Quan |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **SCR-01** | Đăng Nhập Hệ Thống | Trang đơn (Public) | `#/login` | Tất cả | UC01, UC02 |
+| **SCR-02** | Cổng Tra Cứu Hộ Chiếu Pin QR | Trang Mobile-First (Public) | `#/passport/:serialNumber` | Kiểm toán EU, Khách hàng, Public | UC06, UC13, UC14 |
+| **SCR-10** | Dashboard Giám Sát SoH & Cảnh Báo | Trang chính Workspace | `#/dashboard` | Admin HQ, Station Lead, Kỹ thuật viên | UC03 |
+| **SCR-20** | Sổ Quản Lý Pack Pin Hệ Thống | Trang bảng dữ liệu | `#/batteries` | Admin HQ, Station Lead, Kỹ thuật viên | UC04 |
+| **SCR-21** | Đăng Ký Pin & Khởi Tạo Hộ Chiếu | Hộp thoại Modal | `#/batteries/new` | Admin HQ | UC05 |
+| **SCR-22** | Chi Tiết Hộ Chiếu & Lịch Sử Xe 1-N | Hộp thoại Drawer / Modal | `#/batteries/:id` | Admin HQ, Station Lead, Kỹ thuật viên | UC04, UC06 |
+| **SCR-23** | Cấu Hình & In Tem Nhãn Mã QR | Hộp thoại Modal | `#/batteries/:id/qr` | Station Lead, Kỹ thuật viên | UC07 |
+| **SCR-30** | Danh Mục Nhật Ký Đo Kiểm SoH | Trang bảng dữ liệu | `#/inspections` | Admin HQ, Station Lead, Kỹ thuật viên | UC08 |
+| **SCR-31** | Nhập Liệu Đo Dung Lượng & Lỗi Cell | Hộp thoại Modal | `#/inspections/new` | Station Lead, Kỹ thuật viên | UC08, UC09 |
+| **SCR-32** | Phê Duyệt Lệnh Đổi Pin Mới Cho Xe | Hộp thoại Modal | `#/inspections/:id/swap` | Station Lead | UC09 |
+| **SCR-40** | Điều Phối Tái Sinh Trạm Sạc BESS | Trang thẻ trạm & bảng | `#/second-life` | Admin HQ, Station Lead | UC10 |
+| **SCR-41** | Phê Duyệt Lệnh Thanh Lý & Tái Chế | Hộp thoại Modal | `#/second-life/recycle` | Admin HQ, Station Lead | UC11 |
+| **SCR-50** | Nhập Lô Dữ Liệu Pin Từ Excel | Trang thao tác tải tệp | `#/import` | Admin HQ | UC12 |
+| **SCR-60** | Trung Tâm Báo Cáo & Xuất PDF EU | Trang tương tác lọc & xem | `#/reports` | Admin HQ, Station Lead | UC14 |
+| **SCR-70** | Nhật Ký Kiểm Toán (Audit Trail) | Trang bảng bất biến | `#/audit` | Admin HQ, Station Lead | UC15 |
+| **SCR-80** | Quản Trị Tài Khoản & Phân Xưởng | Trang bảng dữ liệu | `#/users` | Admin HQ | UC16 |
+| **SCR-81** | Tạo Mới / Sửa Người Dùng | Hộp thoại Modal | `#/users/form` | Admin HQ | UC16 |
+| **SCR-85** | Hồ Sơ Cá Nhân & Bảo Mật | Trang dạng Tabs | `#/profile` | Tất cả người dùng nội bộ | UC01, UC16 |
+| **SCR-90** | Từ Chối Truy Cập (403 Forbidden) | Trang thông báo lỗi | `#/403` | Tất cả | Cross-cutting RBAC |
+
+Đặc tả chi tiết từng thành phần giao diện, chức năng trong màn hình, hợp đồng 8 trạng thái UI/UX và luồng thao tác điển hình được duy trì đầy đủ tại tài liệu kỹ thuật [Kiến Trúc Thông Tin & Phân Cấp Giao Diện (Information Architecture)](docs/04-information-architecture.md).
 
 ## 3. Kiến Trúc C4 (C4 Architecture)
 
